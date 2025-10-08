@@ -1,0 +1,15 @@
+from sqlalchemy import Column, Integer, String, ForeignKey, column
+from app.db.base import Base
+from sqlalchemy.orm import relationship
+
+class DietProfile(Base):
+    __tablename__ = "diet_profile"
+
+    diet_id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("user.userid"), nullable=False)
+    start_id = Column(Integer, ForeignKey("start.start_id"), nullable=False)
+    diet_type = Column(String(50), nullable=False)
+    is_active = Column(Integer, default=1) # 1 for active, 0 for inactive
+
+    user = relationship("User", back_populates="diet_profiles")
+    start = relationship("Start", back_populates="diet_profiles")

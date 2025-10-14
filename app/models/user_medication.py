@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 class UserMedication(Base):
     __tablename__ = "user_medication"
 
-    user_id = Column(Integer, ForeignKey("user.userid"), primary_key=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("user.user_id"), primary_key=True, nullable=False)
     medication_id = Column(Integer, ForeignKey("medication.medication_id"), primary_key=True, nullable=False)
     dosage = Column(String(50), nullable=True)
     schedule_note = Column(String(100), nullable=True)

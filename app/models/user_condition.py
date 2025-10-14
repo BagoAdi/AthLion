@@ -5,7 +5,7 @@ from sqlalchemy.orm import relationship
 class UserCondition(Base):
     __tablename__ = "user_condition"
 
-    user_id = Column(Integer, ForeignKey("user.userid"), nullable=False)
+    user_id = Column(Integer, ForeignKey("user.user_id"), nullable=False)
     condition_id = Column(Integer, ForeignKey("health_condition.condition_id"), nullable=False)
     note = Column(String(255), nullable=True)
     

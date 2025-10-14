@@ -1,0 +1,16 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: athlion-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: athlion
+      MYSQL_USER: athlion
+      MYSQL_PASSWORD: athlion
+    ports:
+      - "3306:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+volumes:
+  dbdata:

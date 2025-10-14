@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Float
+from sqlalchemy.orm import relationship
 from app.db.base import Base
 
 class StartState(Base):
@@ -10,3 +11,6 @@ class StartState(Base):
     goal_type = Column(String(50), nullable=False)  # e.g., "weight_loss", "muscle_gain"
     motivation_goal = Column(String(255), nullable=True)
     created_at = Column(String(50), nullable=False)  # ISO format date string
+    
+    diet_profiles = relationship("DietProfile", back_populates="start", cascade="all, delete-orphan")
+    training_profiles = relationship("TrainingProfile", back_populates="start", cascade="all, delete-orphan")

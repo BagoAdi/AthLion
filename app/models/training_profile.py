@@ -1,12 +1,13 @@
 from sqlalchemy import Column, Integer, ForeignKey, String
-from app.db.session import Base
+from app.db.base import Base
+
 from sqlalchemy.orm import relationship
 
 class TrainingProfile(Base):
     __tablename__ = "training_profile"  
 
     training_id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("user.userid"), nullable=False)
+    user_id = Column(Integer, ForeignKey("user.user_id"), nullable=False)
     start_id = Column(Integer, ForeignKey("start_state.start_id"), nullable=False)
     load_level = Column(String(50), nullable=False)
     program_time = Column(String(50), nullable=False)

@@ -1,13 +1,14 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, column
 from app.db.base import Base
+
 from sqlalchemy.orm import relationship
 
 class DietProfile(Base):
     __tablename__ = "diet_profile"
 
     diet_id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("user.userid"), nullable=False)
-    start_id = Column(Integer, ForeignKey("start.start_id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("user.user_id"), nullable=False)
+    start_id = Column(Integer, ForeignKey("start_state.start_id"), nullable=False)
     diet_type = Column(String(50), nullable=False)
     is_active = Column(Integer, default=1) # 1 for active, 0 for inactive
 

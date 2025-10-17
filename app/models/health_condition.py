@@ -8,4 +8,4 @@ class HealthCondition(Base):
     condition_id = Column(Integer, primary_key=True, index=True)
     condition_name = Column(String(100), nullable=False)
 
-    user_links = relationship("UserCondition", back_populates="condition", cascade="all, delete-orphan")
+    users = relationship("UserCondition", back_populates="condition", cascade="all, delete-orphan")

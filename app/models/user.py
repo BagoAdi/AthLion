@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, Float
+from sqlalchemy import Column, DateTime, Integer, String, Date, Float, func
 from sqlalchemy.orm import relationship
 from app.db.base import Base
 
@@ -11,6 +11,8 @@ class User(Base):
     height_cm = Column(Float, nullable=False)
     sex = Column(String(10), nullable=False)
     email = Column(String(100), unique=True, index=True, nullable=False)
+    password_hash = Column(String(256), nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     allergies = relationship("UserAllergy", back_populates="user", cascade="all, delete-orphan")
     medications = relationship("UserMedication", back_populates="user", cascade="all, delete-orphan")

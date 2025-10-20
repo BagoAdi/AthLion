@@ -2,8 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-# API route-ok
-from app.api.v1.routes import auth as auth_routes  # ezt már megírtuk korábban
+import app.models  # <-- EZ KELL: minden modell betölt, mapper regisztráció kész
+
+from app.api.v1.routes import auth as auth_routes
 
 app = FastAPI()
 

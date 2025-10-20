@@ -10,5 +10,6 @@ class UserMedication(Base):
     dosage = Column(String(50), nullable=True)
     schedule_note = Column(String(100), nullable=True)
 
-    user = relationship("User", back_populates="medications")   
-    medication = relationship("Medication", back_populates="users")
+    user = relationship("User", back_populates="medications")
+    # Medication oldalon a név: user_links
+    medication = relationship("Medication", back_populates="user_links")

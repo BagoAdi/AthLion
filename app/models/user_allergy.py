@@ -14,5 +14,6 @@ class UserAllergy(Base):
     note = Column(String(100), nullable=True)
 
     user = relationship("User", back_populates="allergies")
-    allergen = relationship("Allergen", back_populates="users")
+    # EZ VOLT A BAJ: a másik oldalon Allergen.user_links a neve
+    allergen = relationship("Allergen", back_populates="user_links")
     

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bejelentkezés – ATHLION</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar glass">
+    <div class="brand">
+      <a href="index.html" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit">
+        <img src="athlion_logo.png" alt="ATHLION logó" />
+        <div class="title">ATH<span>LION</span></div>
+      </a>
+    </div>
+  </header>
+
+  <main style="display:grid;place-items:center;height:100vh;padding:20px">
+    <form id="loginForm" class="glass" style="max-width:400px;width:100%;padding:28px;border-radius:28px;">
+      <h2 style="text-align:center;margin-top:0;margin-bottom:14px">Bejelentkezés</h2>
+
+      <label for="email" style="font-size:13px;color:var(--muted)">Email cím</label>
+      <input type="email" id="email" required placeholder="pelda@athlion.app" />
+
+      <label for="password" style="font-size:13px;color:var(--muted)">Jelszó</label>
+      <input type="password" id="password" required placeholder="********" />
+
+      <button class="btn" type="submit" style="margin-top:18px">Bejelentkezem</button>
+      <p id="msg" style="margin-top:10px;font-size:13px;color:var(--muted);text-align:center"></p>
+
+      <p style="margin-top:16px;text-align:center;font-size:13px;color:var(--muted)">
+        Még nincs fiókod? <a href="register.html" style="color:var(--gold-1);text-decoration:none;font-weight:600">Regisztráció</a>
+      </p>
+    </form>
+  </main>
+
+  <script src="login.js"></script>
+</body>
+</html>

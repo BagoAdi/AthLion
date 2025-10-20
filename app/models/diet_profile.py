@@ -13,4 +13,5 @@ class DietProfile(Base):
     is_active = Column(Integer, default=1) # 1 for active, 0 for inactive
 
     user = relationship("User", back_populates="diet_profiles")
-    start = relationship("Start", back_populates="diet_profiles")
+    # A modell neve StartState, nem "Start"
+    start = relationship("StartState", back_populates="diet_profiles")

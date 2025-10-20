@@ -15,4 +15,5 @@ class UserInjury(Base):
     )
 
     user = relationship("User", back_populates="injuries")
-    injury = relationship("Injury", back_populates="users")
+    # Injury oldalon a név: user_links
+    injury = relationship("Injury", back_populates="user_links")

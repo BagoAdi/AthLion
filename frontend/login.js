@@ -1,35 +1,29 @@
-const form = document.getElementById("registerForm");
+const form = document.getElementById("loginForm");
 const msg = document.getElementById("msg");
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   msg.style.color = "var(--muted)";
-  msg.textContent = "Folyamatban...";
+  msg.textContent = "Bejelentkezés folyamatban...";
 
   const email = document.getElementById("email").value.trim();
-  const user_name = document.getElementById("user_name").value.trim();
   const password = document.getElementById("password").value.trim();
-  const date_of_birth = document.getElementById("dob").value;      // YYYY-MM-DD
-  const height_cm = parseFloat(document.getElementById("height").value);
-  const sex = document.getElementById("sex").value.trim();
 
-  // minimális kliensoldali valid
-  if (!email || !user_name || !password || !date_of_birth || !height_cm || !sex) {
+  if (!email || !password) {
     msg.style.color = "var(--err)";
-    msg.textContent = "❌ Minden mező kötelező.";
+    msg.textContent = "❌ Add meg az email címet és jelszót.";
     return;
   }
 
   try {
-    const res = await fetch("/api/v1/auth/register", {
+    const res = await fetch("/api/v1/auth/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, user_name, password, date_of_birth, height_cm, sex })
+      body: JSON.stringify({ email, password })
     });
 
     const ct = res.headers.get("content-type") || "";
-    const payload = ct.includes("application/json") ? await res.json()
-                                                    : { detail: await res.text() };
+    const payload = ct.includes("application/json") ? await res.json() : { detail: await res.text() };
 
     if (!res.ok) {
       let msgText;
@@ -43,10 +37,12 @@ form.addEventListener("submit", async (e) => {
       throw new Error(msgText);
     }
 
+    // Sikeres login
     msg.style.color = "var(--ok)";
-    msg.textContent = "✅ Sikeres regisztráció!";
-    // pl. átirányítás:
-    // location.href = "index.html";
+    msg.textContent = "✅ Sikeres bejelentkezés!";
+    localStorage.setItem("token", payload.access_token);
+    setTimeout(() => (window.location.href = "index.html"), 1200);
+
   } catch (err) {
     msg.style.color = "var(--err)";
     msg.textContent = "❌ " + err.message;

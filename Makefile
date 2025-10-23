@@ -1,11 +1,14 @@
+python -m pip install \
+		fastapi \
+		"uvicorn[standard]" \
+		SQLAlchemy \
+		alembic \
+		"psycopg[binary]" \
+		"psycopg2-binary" \
+		"passlib[bcrypt]" \
+		"python-jose[cryptography]" \
+		python-dotenv \
+		"pydantic[email]"
+
 run:
 	uvicorn app.main:app --reload
-
-
-pip install psycopg2-binary
-
-pip install passlib[bcrypt] python-jose[cryptography] email-validator pydantic
-pip install "passlib[bcrypt]" "python-jose[cryptography]" email-validator
-pip install dotenv
-
-pip install "sqlalchemy>=2.0" "psycopg[binary]" python-dotenv

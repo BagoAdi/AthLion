@@ -5,6 +5,27 @@ from sqlalchemy import pool
 
 from alembic import context
 
+# Töltsük be a .env fájlt a projekt gyökeréből
+# A env.py a 'migrations' mappában van, ezért ugrunk egy szintet (parents[1]) feljebb
+BASE_DIR = Path(__file__).resolve().parents[1]
+env_path = BASE_DIR / ".env"
+load_dotenv(env_path)
+
+# Olvassuk ki a DATABASE_URL-t
+raw = os.getenv("DATABASE_URL")
+if not raw:
+    raise RuntimeError("DATABASE_URL nincs betöltve a .env fájlból")
+
+# Ugyanazt a driver logikát használjuk, mint a session.py
+# Az Alembic a sync kapcsolatot használja, de a psycopg driver kell neki
+# A session.py-ban lévő "postgres://" -> "postgresql://" csere itt nem kell,
+# de a "+psycopg" driver megadása igen.
+alembic_url = raw.replace("postgresql://", "postgresql+psycopg://", 1)
+
+# Állítsuk be a configban az URL-t
+# Ez felülírja az alembic.ini-ben lévő (vagy hiányzó) értéket
+config.set_main_option("sqlalchemy.url", alembic_url)
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

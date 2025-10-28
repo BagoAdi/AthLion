@@ -5,6 +5,10 @@ from fastapi.staticfiles import StaticFiles
 import app.models  # <-- EZ KELL: minden modell betölt, mapper regisztráció kész
 
 from app.api.v1.routes import auth as auth_routes
+# === ÚJ IMPORT-OK ===
+from app.api.v1.routes import users as users_routes
+from app.api.v1.routes import profiles as profiles_routes
+# ====================
 
 app = FastAPI()
 
@@ -18,6 +22,10 @@ app.add_middleware(
 
 # 1) API mount
 app.include_router(auth_routes.router, prefix="/api/v1")
+# === ÚJ ROUTER-EK ===
+app.include_router(users_routes.router, prefix="/api/v1")
+app.include_router(profiles_routes.router, prefix="/api/v1")
+# =====================
 
 # 2) Frontend (statikus) mount
 # A projekt gyökeréből nézve a 'frontend' mappát szolgáljuk ki.

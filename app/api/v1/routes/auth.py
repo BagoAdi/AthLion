@@ -92,7 +92,7 @@ def register(payload: RegisterIn, db: Session = Depends(get_db)):
 @router.post("/login", response_model=TokenOut)
 def login(payload: LoginIn, db: Session = Depends(get_db)):
     u = db.query(User).filter(User.email == payload.email).first()
-    if not u or not pbkdf2_sha256.verify(payload.password, u.password_hash):
+    if not u or not pbkdf2_sha256.verify(payload.password, str(u.password_hash)):
         raise HTTPException(401, "Invalid credentials")
     token = jwt.encode({"sub": str(u.user_id)}, JWT_SECRET, algorithm=JWT_ALG)
     return {"access_token": token}

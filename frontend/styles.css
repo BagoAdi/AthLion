@@ -1,9 +1,20 @@
     /******************* styles.css (kimenet) *******************/
     :root{
-      --gold-1:#d4af37; --gold-2:#f2d26b; --bg:#0a0a0b; --text:#f5f5f7; --muted:#b8bcc7;
-      --border:#26262b; --ok:#46d39a; --err:#ff6b6b; --shadow: 0 12px 36px rgba(0,0,0,.45);
-      --radius:22px; --radius-lg:28px; --transition:cubic-bezier(.2,.65,.18,1);
-      --glass-bg: rgba(255,255,255,.06); --glass-stroke: rgba(255,255,255,.12);
+      --gold-1: #3E8EDE;     /* Fő akcentus (Világoskék) */
+      --gold-2: #6ECB6C;     /* Másodlagos akcentus (Zöld) */
+      --bg: #1A2C3D;         /* Sötétkék háttér (a logó hátteréből) */
+      --text: #FFFFFF;       /* Fehér szöveg (a logó szövegéből) */
+      --muted: #B0C4DE;      /* Halvány kék/szürke a "muted" szöveghez */
+      --border: #2F4F6F;     /* Sötétkék szegély (világosabb a háttérnél) */
+      --ok: #6ECB6C;         /* Zöld a "success" üzenethez */
+      --err: #ff6b6b;       /* Piros maradhat hiba esetén */
+      --shadow: 0 12px 36px rgba(0,0,0,.45); 
+      --radius: 22px;  
+      --radius-lg: 28px;  
+      --transition: cubic-bezier(.2,.65,.18,1);
+
+      --glass-bg: rgba(47, 79, 111, 0.3);  /* Áttetsző sötétkék */
+      --glass-stroke: rgba(62, 142, 222, 0.4); /* Áttetsző világoskék szegély */
     }
     *{box-sizing:border-box}
     html,body{height:100%}

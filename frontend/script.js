@@ -38,6 +38,7 @@ if (saveMacrosBtn) {
 
 // i18n (egyszerű HU/EN)
 let LANG='hu';
+let registrationDate = null; // backendből jön majd (user.created_at), fallback ha nincs
 const TXT={
   hu:{navDiet:'Étrend',navWorkout:'Edzésterv',navSignin:'Bejelentkezés',cta:'Kezdjük el',homeTitle:'Edzésterv + Étrend – egyben, egyszerűen.',homeSubtitle:'Az ATHLION a céljaidhoz igazítja az edzést és az étrendet.',goDiet:'← Étrend kezelő',goWorkout:'Edzésterv →',dietTitle:'Étrend kezelő',dietSubtitle:'Makró-célok, heti terv, bevásárlólista.',macroTitle:'Makró célok',calLabel:'Napi kalória',foodSearchTitle:'Étel kereső',weeklyDietTitle:'Heti étrend',bmiTitle:'BMI / BMR',tipTitle:'Napi tipp',tipCopy:'Aludj 7–9 órát. A fejlődés 50%-a a pihenőn múlik.',qsTitle:'Gyorsindító',qsCopy:'Válaszd ki a célod és indulhat a tervgenerálás.',workoutTitle:'Edzésterv-összeállító',workoutSubtitle:'Fogd-és-vidd gyakorlatsorrend, heti bontás.',weekPlanTitle:'Heti terv',dMon:'Hétfő:',dWed:'Szerda:',dFri:'Péntek:'},
   en:{navDiet:'Diet',navWorkout:'Workout',navSignin:'Sign in',cta:'Get Started',homeTitle:'Training + Diet — together, simply.',homeSubtitle:'ATHLION adapts training and nutrition to your goals.',goDiet:'← Diet Manager',goWorkout:'Workout →',dietTitle:'Diet Manager',dietSubtitle:'Macro targets, weekly plan, shopping list.',macroTitle:'Macro goals',calLabel:'Daily calories',foodSearchTitle:'Food Search',weeklyDietTitle:'Weekly diet',bmiTitle:'BMI / BMR',tipTitle:'Daily tip',tipCopy:'Sleep 7–9 hours. Half of progress comes from rest.',qsTitle:'Quickstart',qsCopy:'Pick your goal and generate a plan.',workoutTitle:'Plan Builder',workoutSubtitle:'Drag & drop ordering, weekly layout.',weekPlanTitle:'Weekly plan',dMon:'Monday:',dWed:'Wednesday:',dFri:'Friday:'}
@@ -118,13 +119,7 @@ function renderDayMeals(){ const box=$('#dietDayList'); if(!box) return; const i
 function addMealToDay(i,item){ WEEK[i].push(item); renderDayMeals(); }
 buildDietTabs(); renderDayMeals();
 
-// Drag & Drop (demo)
-const dragArea=$('#dragArea');
-if(dragArea){
-    dragArea.addEventListener('dragover',e=>{e.preventDefault(); dragArea.style.borderColor='var(--gold-1)';});
-    dragArea.addEventListener('dragleave',()=>{dragArea.style.borderColor='#2b2b2f';});
-    dragArea.addEventListener('drop',e=>{e.preventDefault(); dragArea.style.borderColor='#2b2b2f'; dragArea.textContent=(LANG==='hu')?'✅ Hozzáadva a tervhez (demo)':'✅ Added to plan (demo)';});
-}
+// Drag & Drop (demo
 
 // A t() függvény hívása, miután minden definíció kész
 t(); 
@@ -217,3 +212,16 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.removeItem("token");
     });
 });
+
+const EXERCISES = [
+  { id: 'squat', name: 'Guggolás', tag: 'Láb' },
+  { id: 'bench', name: 'Fekvenyomás', tag: 'Mell' },
+  { id: 'deadlift', name: 'Felhúzás', tag: 'Hát' },
+  { id: 'ohp', name: 'Vállnyomás', tag: 'Váll' },
+  { id: 'row', name: 'Evezés döntött törzzsel', tag: 'Hát' },
+  { id: 'pullup', name: 'Húzódzkodás', tag: 'Hát' },
+  { id: 'dip', name: 'Tolódzkodás', tag: 'Mell/Kar' },
+  { id: 'lunge', name: 'Kitörés', tag: 'Láb' },
+  { id: 'plank', name: 'Plank', tag: 'Core' },
+  { id: 'cardio', name: 'Kardió gép (futópad / ellipszis)', tag: 'Kardió' }
+];

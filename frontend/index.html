@@ -115,12 +115,60 @@
           <p id="workoutSubtitle">Fogd-és-vidd gyakorlatsorrend, heti bontás.</p>
         </div>
         <div class="panel-inner">
-          <section class="card glass drag-area" id="dragArea">Húzd ide a gyakorlatokat (demo)</section>
-          <section class="card glass plan">
-            <h3 id="weekPlanTitle">Heti terv</h3>
-            <div class="day"><strong id="dMon">Hétfő:</strong> Guggolás, Fekvenyomás</div>
-            <div class="day"><strong id="dWed">Szerda:</strong> Felhúzás, Vállnyomás</div>
-            <div class="day"><strong id="dFri">Péntek:</strong> Kardió</div>
+          <!-- BAL OLDAL: GYAKORLAT BUILDER -->
+          <section class="card glass workout-builder">
+            <div class="builder-header">
+              <h3>Gyakorlatválasztó</h3>
+              <p class="muted">
+                Válaszd ki a napot a naptárban, majd húzd be először a
+                <strong>3 fő gyakorlatot</strong>. Ezek alapján ajánlunk még
+                <strong>+3 kiegészítőt</strong>, végül zárd le a napot.
+              </p>
+            </div>
+
+            <div class="builder-section">
+              <h4>Elérhető gyakorlatok</h4>
+              <div class="exercise-pool" id="exercisePool"></div>
+            </div>
+
+            <div class="builder-section">
+              <h4>Fő edzések (max. 3)</h4>
+              <div class="dropzone" id="mainExercises">
+                <span class="dropzone-placeholder">
+                  Húzd ide a fő gyakorlatokat
+                </span>
+              </div>
+            </div>
+
+            <div class="builder-section">
+              <h4>Kiegészítő ajánlott edzések (max. 3)</h4>
+              <div class="dropzone" id="extraExercises">
+                <span class="dropzone-placeholder">
+                  Ha megvan a 3 fő gyakorlat, automatikusan ajánlunk +3-at ide.
+                </span>
+              </div>
+            </div>
+
+            <button class="btn" id="lockDayBtn" disabled>Nap lezárása</button>
+            <p class="muted small" id="lockInfo">
+              Válassz ki legalább 3 gyakorlatot a nap lezárásához.
+            </p>
+          </section>
+
+          <!-- JOBB OLDAL: NAPTÁR -->
+          <section class="card glass plan calendar-card">
+            <h3>Naptár</h3>
+            <p class="muted">
+              Válassz egy napot. A lezárt napok visszatekinthetők,
+              az új napokra pedig összeállíthatod az edzést.
+            </p>
+
+            <div class="calendar-current">
+              Aktuálisan kiválasztott nap:
+              <span id="calendarCurrentLabel">–</span>
+            </div>
+
+            <div class="calendar-list" id="calendarList"></div>
           </section>
         </div>
       </article>
@@ -135,5 +183,6 @@
 
   <!-- Külső JS (ha külön fájlra bontod) -->
   <script src="script.js"></script>
+  <script src="workout.js"></script>
 </body>
 </html>

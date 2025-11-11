@@ -44,45 +44,57 @@ const TXT={
   en:{navDiet:'Diet',navWorkout:'Workout',navSignin:'Sign in',cta:'Get Started',homeTitle:'Training + Diet — together, simply.',homeSubtitle:'ATHLION adapts training and nutrition to your goals.',goDiet:'← Diet Manager',goWorkout:'Workout →',dietTitle:'Diet Manager',dietSubtitle:'Macro targets, weekly plan, shopping list.',macroTitle:'Macro goals',calLabel:'Daily calories',foodSearchTitle:'Food Search',weeklyDietTitle:'Weekly diet',bmiTitle:'BMI / BMR',tipTitle:'Daily tip',tipCopy:'Sleep 7–9 hours. Half of progress comes from rest.',qsTitle:'Quickstart',qsCopy:'Pick your goal and generate a plan.',workoutTitle:'Plan Builder',workoutSubtitle:'Drag & drop ordering, weekly layout.',weekPlanTitle:'Weekly plan',dMon:'Monday:',dWed:'Wednesday:',dFri:'Friday:'}
 };
 function t(){ 
-    if (!$('#navDiet')) return;
-    const S=TXT[LANG];
-    
-    // JAVÍTÁS: A t() függvényt "eltiltjuk" a bejelentkezés gomb bántásától.
-    $('#navDiet').textContent=S.navDiet; 
-    $('#navWorkout').textContent=S.navWorkout; 
-    $('#getStarted').textContent=S.cta;
+    const navDiet = $('#navDiet');
+    if (!navDiet) return;           // ha nincs nav, nincs mit fordítani
+
+    const S = TXT[LANG];
+    const setText = (id, value) => {
+      const el = $('#'+id);
+      if (el) el.textContent = value;
+    };
+
+    navDiet.textContent = S.navDiet;
+    const navWorkout = $('#navWorkout');
+    if (navWorkout) navWorkout.textContent = S.navWorkout;
+
+    const getStartedBtn = $('#getStarted');
+    if (getStartedBtn) getStartedBtn.textContent = S.cta;
 
     const homeTitle = $('#homeTitle');
-    // Csak akkor írja át a címet, ha az még az alapértelmezett (vagy angol vagy magyar)
     if (homeTitle && (homeTitle.textContent === TXT.en.homeTitle || homeTitle.textContent === TXT.hu.homeTitle)) {
         homeTitle.textContent = S.homeTitle; 
     }
-    
-    $('#homeSubtitle').textContent=S.homeSubtitle; 
-    $('#goDiet').textContent=S.goDiet; 
-    $('#goWorkout').textContent=S.goWorkout;
-    $('#dietTitle').textContent=S.dietTitle; 
-    $('#dietSubtitle').textContent=S.dietSubtitle; 
-    $('#macroTitle').textContent=S.macroTitle; 
-    $('#calLabel').textContent=S.calLabel; 
-    $('#foodSearchTitle').textContent=S.foodSearchTitle; 
-    $('#weeklyDietTitle').textContent=S.weeklyDietTitle;
-    $('#bmiTitle').textContent=S.bmiTitle; 
-    $('#tipTitle').textContent=S.tipTitle; 
-    $('#tipCopy').textContent=S.tipCopy; 
-    $('#qsTitle').textContent=S.qsTitle; 
-    $('#qsCopy').textContent=S.qsCopy;
-    $('#workoutTitle').textContent=S.workoutTitle; 
-    $('#workoutSubtitle').textContent=S.workoutSubtitle; 
-    $('#weekPlanTitle').textContent=S.weekPlanTitle; 
-    $('#dMon').textContent=S.dMon; 
-    $('#dWed').textContent=S.dWed; 
-    $('#dFri').textContent=S.dFri;
-    
+
+    setText('homeSubtitle', S.homeSubtitle);
+    setText('goDiet', S.goDiet);
+    setText('goWorkout', S.goWorkout);
+
+    setText('dietTitle', S.dietTitle);
+    setText('dietSubtitle', S.dietSubtitle);
+    setText('macroTitle', S.macroTitle);
+    setText('calLabel', S.calLabel);
+    setText('foodSearchTitle', S.foodSearchTitle);
+    setText('weeklyDietTitle', S.weeklyDietTitle);
+
+    setText('bmiTitle', S.bmiTitle);
+    setText('tipTitle', S.tipTitle);
+    setText('tipCopy', S.tipCopy);
+    setText('qsTitle', S.qsTitle);
+    setText('qsCopy', S.qsCopy);
+
+    setText('workoutTitle', S.workoutTitle);
+    setText('workoutSubtitle', S.workoutSubtitle);
+    setText('weekPlanTitle', S.weekPlanTitle);
+    setText('dMon', S.dMon);
+    setText('dWed', S.dWed);
+    setText('dFri', S.dFri);
+
+    // Diet funkciók csak akkor fognak csinálni bármit, ha az elemek léteznek
     buildDietTabs(); 
     renderDayMeals(); 
     doFoodSearch();
 }
+
 const langToggleBtn = $('#langToggle');
 if(langToggleBtn){
     langToggleBtn.addEventListener('click',()=>{ LANG=(LANG==='hu')?'en':'hu'; t(); });
@@ -225,3 +237,58 @@ const EXERCISES = [
   { id: 'plank', name: 'Plank', tag: 'Core' },
   { id: 'cardio', name: 'Kardió gép (futópad / ellipszis)', tag: 'Kardió' }
 ];
+
+// ===== NAV AUTH UI =====
+
+function updateAuthUI() {
+  const token = localStorage.getItem('token');
+
+  const navRegister = $('#navRegister');
+  const navSignin   = $('#navSignin');
+  const navLogout   = $('#navLogout');
+  const welcome     = $('#welcomeText');
+
+  if (!welcome || !navLogout) return; // ha nem ezen az oldalon vagyunk
+
+  if (token) {
+    const name  = localStorage.getItem('user_name');
+    const email = localStorage.getItem('user_email');
+
+    let label = 'Bejelentkezve';
+    if (name) {
+      label = `Szia, ${name}!`;
+    } else if (email) {
+      const nick = email.split('@')[0];
+      label = `Szia, ${nick}!`;
+    }
+
+    welcome.textContent = label;
+    welcome.style.display = 'inline-flex';
+
+    if (navRegister) navRegister.style.display = 'none';
+    if (navSignin)   navSignin.style.display   = 'none';
+    navLogout.style.display = 'inline-flex';
+  } else {
+    welcome.textContent = '';
+    welcome.style.display = 'none';
+
+    if (navRegister) navRegister.style.display = 'inline-flex';
+    if (navSignin)   navSignin.style.display   = 'inline-flex';
+    navLogout.style.display = 'none';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  updateAuthUI();
+
+  const navLogout = $('#navLogout');
+  if (navLogout) {
+    navLogout.addEventListener('click', () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user_name');
+      localStorage.removeItem('user_email');
+      updateAuthUI();
+      window.location.href = 'index.html';
+    });
+  }
+});

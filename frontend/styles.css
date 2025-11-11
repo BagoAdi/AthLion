@@ -1,26 +1,35 @@
     /******************* styles.css (kimenet) *******************/
     :root{
-      --gold-1: #3E8EDE;     /* Fő akcentus (Világoskék) */
-      --gold-2: #6ECB6C;     /* Másodlagos akcentus (Zöld) */
-      --bg: #1A2C3D;         /* Sötétkék háttér (a logó hátteréből) */
-      --text: #FFFFFF;       /* Fehér szöveg (a logó szövegéből) */
-      --muted: #B0C4DE;      /* Halvány kék/szürke a "muted" szöveghez */
-      --border: #2F4F6F;     /* Sötétkék szegély (világosabb a háttérnél) */
-      --ok: #6ECB6C;         /* Zöld a "success" üzenethez */
-      --err: #ff6b6b;       /* Piros maradhat hiba esetén */
-      --shadow: 0 12px 36px rgba(0,0,0,.45); 
-      --radius: 22px;  
-      --radius-lg: 28px;  
+      --gold-1: #3E8EDE;     /* kék akcentus */
+      --gold-2: #6ECB6C;     /* zöld akcentus */
+      --bg: #182636;         /* picit világosabb alap */
+      --text: #FFFFFF;
+      --muted: #C2D4F0;
+      --border: #34516F;
+      --ok: #6ECB6C;
+      --err: #ff6b6b;
+      --shadow: 0 18px 40px rgba(0,0,0,.45);
+      --radius: 22px;
+      --radius-lg: 28px;
       --transition: cubic-bezier(.2,.65,.18,1);
 
-      --glass-bg: rgba(47, 79, 111, 0.3);  /* Áttetsző sötétkék */
-      --glass-stroke: rgba(62, 142, 222, 0.4); /* Áttetsző világoskék szegély */
+      /* világosabb, “ios glass” jellegű panelek */
+      --glass-bg: rgba(19, 36, 60, 0.62);
+      --glass-stroke: rgba(255, 255, 255, 0.09);
     }
+
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text);
-      background:radial-gradient(1200px 700px at 80% -10%, rgba(212,175,55,.14), transparent),
-                 radial-gradient(1000px 600px at 0% 100%, rgba(242,210,107,.10), transparent),var(--bg)}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 80% -10%, rgba(62,142,222,0.22), transparent),
+        radial-gradient(1000px 600px at 0% 100%, rgba(110,203,108,0.20), transparent),
+        radial-gradient(circle at 0 0, #101b2a, #050b14 60%, #020308 100%);
+    }
+
     a{color:inherit;text-decoration:none}
     button{font:inherit}
 
@@ -294,6 +303,19 @@
   border-color: rgba(255,255,255,0.4);
   background: radial-gradient(circle at 30% 0, rgba(255,255,255,0.2), rgba(10,12,18,1));
 }
+
+.welcome{
+  font-size:14px;
+  color:var(--muted);
+  margin-left:8px;
+  white-space:nowrap;
+}
+.nav-auth-group{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
 
 .calendar-month {
   flex: 1;
@@ -768,6 +790,20 @@
   color: var(--muted);
 }
 
+.ghost:hover, .ghost:focus, .ghost:active {
+  color: #fff;
+  background: rgba(255,255,255,0.08);
+  text-decoration: none;
+}
+
+.ghost:hover, .ghost:focus, .ghost:active {
+  color: #fff;
+  background: rgba(255,255,255,0.08);
+  text-decoration: none;
+}
+
+
+
 /* RESPONSIVE */
 
 @media (max-width: 900px) {
@@ -792,5 +828,64 @@
     inset: 10px 10px auto 10px;
     height: 64px;
   }
+
+  /* Oldal-layout külön lapokra (landing / diet / workout) */
+  .page {
+    padding: 0 28px 32px;
+  }
+
+  .page .panel {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+
+  /* Landing hero – központi, iOS-szerű blokk */
+  .hero-main {
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hero-main h1 {
+    font-size: clamp(30px, 4.6vw, 48px);
+  }
+
+  .hero-actions {
+    margin-top: 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  /* Button text ne legyen “full fekete”, picit világosabb, olvashatóbb */
+  .hero-actions .btn.hero-btn {
+    width: auto;
+    padding-inline: 24px;
+    color: #05080c;
+  }
+
+  .hero-actions .ghost {
+    border-radius: 999px;
+    padding-inline: 20px;
+  }
+
+  .hero-secondary {
+    opacity: 0.9;
+  }
+
+  /* Háttér – kicsit “liquid glass”-osabb, kékebb */
+  body {
+    background:
+      radial-gradient(1200px 700px at 80% -10%, rgba(62,142,222,0.22), transparent),
+      radial-gradient(1000px 600px at 0% 100%, rgba(110,203,108,0.18), transparent),
+      radial-gradient(circle at 0 0, #09121f, #050a12 55%, #030509 100%);
+  }
+
+  /* CTA-inline szöveg se legyen full fekete */
+  .widget .cta-inline {
+    color: #05080c;
+  }
+
+  
 
 }

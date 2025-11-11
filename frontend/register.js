@@ -50,14 +50,18 @@ form.addEventListener("submit", async (e) => {
     msg.style.color = "var(--ok)";
     msg.textContent = "✅ Sikeres regisztráció! Átirányítás a beállításokhoz...";
 
-    // 1. Mentsd el a kapott tokent (automatikus bejelentkezés)
+    // 1. Mentsd el a kapott tokent
     localStorage.setItem("token", payload.access_token);
+
+    // üdvözléshez elmentjük a nevet és az emailt
+    localStorage.setItem("user_name", user_name);
+    localStorage.setItem("user_email", email);
 
     // 2. Irányítsd át a setup.html-re
     setTimeout(() => {
         window.location.href = "setup.html";
     }, 1500);
-    // --- VÁLTOZÁS VÉGE ---
+
 
   } catch (err) {
     msg.style.color = "var(--err)";

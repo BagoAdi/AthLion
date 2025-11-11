@@ -228,13 +228,14 @@
   cursor: not-allowed;
 }
 
-/* --- NAPTÁR KÁRTYA --- */
+
+/* --- NAPTÁR KÁRTYA – MONTH VIEW --- */
 
 .calendar-card {
   padding: 18px 20px 20px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 /* Aktuális nap “pill” */
@@ -256,32 +257,89 @@
   color: var(--gold-1);
 }
 
-/* Naptár strip – vízszintesen görgethető, iOS stílus */
-.calendar-list {
+/* Hónap fejléc (‹ October 2025 ›) */
+
+.calendar-header {
   margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px dashed #272727;
+  padding: 6px 10px;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 0 0, rgba(62,142,222,0.22), transparent 60%),
+    rgba(7,10,15,0.95);
+  border: 1px solid rgba(62,142,222,0.4);
   display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 10px;
-  overflow-x: auto;          /* oldalra scroll */
-  overflow-y: hidden;
-  padding-bottom: 6px;
-  scrollbar-width: none;
-}
-.calendar-list::-webkit-scrollbar {
-  display: none;
 }
 
-/* Egy nap chip – FIX szélesség, nem zsugorodik */
+.cal-nav {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(10,12,18,0.95);
+  color: var(--gold-1);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  transition: transform 0.15s var(--transition), box-shadow 0.15s var(--transition), border-color 0.15s var(--transition), background 0.15s var(--transition);
+}
+
+.cal-nav:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+  border-color: rgba(255,255,255,0.4);
+  background: radial-gradient(circle at 30% 0, rgba(255,255,255,0.2), rgba(10,12,18,1));
+}
+
+.calendar-month {
+  flex: 1;
+  text-align: center;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+/* Hét napjai */
+
+.calendar-weekdays {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.calendar-weekdays span {
+  text-align: center;
+  padding: 4px 0;
+  border-radius: 999px;
+  background: rgba(5,7,12,0.9);
+  border: 1px solid rgba(255,255,255,0.04);
+}
+
+/* Grid – 7 oszlop, 6 sor */
+
+.calendar-grid {
+  margin-top: 6px;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-auto-rows: 72px;
+  gap: 6px;
+}
+
+/* Egy nap cella */
+
 .calendar-day {
-  flex: 0 0 80px;            /* fontos: ne zsugorodjon, fix “kártya” */
-  width: 80px;
-  padding: 8px 8px 10px;
-  border-radius: 20px;
+  position: relative;
+  border-radius: 16px;
   background:
     radial-gradient(circle at 0 0, rgba(62,142,222,0.18), transparent 65%),
-    rgba(10,12,18,0.95);
-  border: 1px solid rgba(255,255,255,0.07);
+    rgba(10,12,18,0.96);
+  border: 1px solid rgba(255,255,255,0.06);
   cursor: pointer;
   transition:
     transform 0.16s var(--transition),
@@ -290,32 +348,56 @@
     box-shadow 0.16s var(--transition);
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+  justify-content: space-between;
+  padding: 6px 6px 8px;
+  box-shadow: 0 10px 26px rgba(0,0,0,0.55);
 }
 
+.calendar-day.empty {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  cursor: default;
+}
 
-.calendar-day:hover {
+.calendar-day:hover:not(.empty) {
   transform: translateY(-2px);
   border-color: rgba(255,255,255,0.22);
-  box-shadow: 0 12px 32px rgba(0,0,0,0.65);
+  box-shadow: 0 14px 32px rgba(0,0,0,0.75);
 }
 
-/* Kiválasztott nap */
+/* Kijelölt nap */
+
 .calendar-day.active {
   background:
-    radial-gradient(circle at 0 0, rgba(62,142,222,0.3), transparent 65%),
+    radial-gradient(circle at 0 0, rgba(62,142,222,0.35), transparent 65%),
     radial-gradient(circle at 100% 100%, rgba(110,203,108,0.25), transparent 70%),
-    rgba(10,12,18,0.96);
+    rgba(10,12,18,0.98);
   border-color: var(--gold-1);
 }
 
-/* Van benne edzés */
-.calendar-day.filled {
-  border-color: rgba(110,203,108,0.7);
+/* Mai nap */
+
+.calendar-day.today:not(.empty) {
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.3), 0 10px 26px rgba(0,0,0,0.7);
 }
 
-/* Dátum rész */
+/* Van edzés aznap */
+
+.calendar-day.filled::after {
+  content: "";
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--gold-2);
+}
+
+/* dátum + napnév */
+
 .calendar-date {
   display: flex;
   flex-direction: column;
@@ -324,18 +406,17 @@
 }
 
 .calendar-dayname {
-  font-size: 11px;
+  font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--muted);
 }
 
-/* Kerek badge a számnak */
 .calendar-datenum {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
-  width: 32px;
-  height: 32px;
+  width: 26px;
+  height: 26px;
   border-radius: 999px;
   display: grid;
   place-items: center;
@@ -343,15 +424,17 @@
   color: #050608;
 }
 
-/* Alul kis összegzés */
+/* Rövid összegzés (pl. "4 gyakorlat")  */
+
 .calendar-summary {
   font-size: 10px;
   line-height: 1.2;
   text-align: center;
   color: var(--muted);
-  max-width: 110px;
-  margin: 0 auto;
+  max-width: 100%;
+  min-height: 12px;
 }
+
 .calendar-day.filled .calendar-summary {
   color: var(--gold-2);
   font-weight: 600;
@@ -361,8 +444,4 @@
   .calendar-card {
     order: -1;
   }
-  .calendar-list {
-    margin-bottom: 4px;
-  }
 }
-

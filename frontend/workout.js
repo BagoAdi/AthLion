@@ -1,4 +1,4 @@
-// workout.js – csak az edzésterv-összeállító panelhez
+// workout.js – edzésterv-összeállító + havi naptár
 
 (function () {
   const qs = (sel, root = document) => root.querySelector(sel);
@@ -35,6 +35,10 @@
   let registrationDate = window.AthlionRegistrationDate
     ? new Date(window.AthlionRegistrationDate)
     : null;
+
+  // melyik hónap van épp megjelenítve (első napra állítva)
+  let calendarMonth = new Date();
+  calendarMonth.setDate(1);
 
   function dateKey(d) {
     return d.toISOString().slice(0, 10); // YYYY-MM-DD
@@ -194,58 +198,88 @@
     renderDropzones();
   }
 
-  // ---------- NAPTÁR ----------
+  // ---------- NAPTÁR (HAVI GRID) ----------
 
   function renderCalendar() {
-    const list = qs('#calendarList');
+    const grid = qs('#calendarList');
     const label = qs('#calendarCurrentLabel');
-    if (!list) return;
+    const monthLabel = qs('#calendarMonthLabel');
+    if (!grid) return;
 
-    list.innerHTML = '';
+    grid.innerHTML = '';
 
+    // ha nincs selectedDate, induljunk ma-ról
     const today = new Date();
-    const end = new Date(today);
-    end.setDate(end.getDate() + 30);
-
-    let start = registrationDate ? new Date(registrationDate) : new Date();
-    if (!registrationDate) {
-      // fallback: 2 hétre vissza
-      start.setDate(start.getDate() - 14);
-    }
-
     if (!selectedDateKey) {
       selectedDateKey = dateKey(today);
     }
 
-    let d = new Date(start);
-    while (d <= end) {
+    // ha nincs beállítva a hónap, igazítsuk a selectedhez
+    if (!calendarMonth) {
+      const sel = new Date(selectedDateKey);
+      calendarMonth = new Date(sel.getFullYear(), sel.getMonth(), 1);
+    }
+
+    const y = calendarMonth.getFullYear();
+    const m = calendarMonth.getMonth();
+    const firstOfMonth = new Date(y, m, 1);
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+
+    // hétfő-első offset (0 = hétfő, 6 = vasárnap)
+    const jsDay = firstOfMonth.getDay();      // 0 = vasárnap
+    const offset = (jsDay + 6) % 7;           // 0 = hétfő
+
+    // Havi cím
+    if (monthLabel) {
+      monthLabel.textContent = firstOfMonth.toLocaleDateString('hu-HU', {
+        year: 'numeric',
+        month: 'long'
+      });
+    }
+
+    // 6 sor * 7 oszlop = 42 cella
+    for (let i = 0; i < 42; i++) {
+      const cell = document.createElement('div');
+
+      const dayNum = i - offset + 1;
+      if (dayNum < 1 || dayNum > daysInMonth) {
+        cell.className = 'calendar-day empty';
+        grid.appendChild(cell);
+        continue;
+      }
+
+      const d = new Date(y, m, dayNum);
       const key = dateKey(d);
       const dayData = calendarData[key];
+      const isSelected = key === selectedDateKey;
+      const isToday = key === dateKey(today);
 
-      const item = document.createElement('div');
-      item.className = 'calendar-day';
-      if (key === selectedDateKey) item.classList.add('active');
-      if (dayData) item.classList.add('filled');
+      cell.className = 'calendar-day';
+      if (isSelected) cell.classList.add('active');
+      if (dayData) cell.classList.add('filled');
+      if (isToday) cell.classList.add('today');
 
-      const summary = dayData
-        ? [...dayData.main, ...dayData.extra].map(x => x.name).join(', ')
-        : 'Nincs edzés';
+      // összegzés: hány gyakorlat
+      let summary = '';
+      if (dayData) {
+        const count = (dayData.main?.length || 0) + (dayData.extra?.length || 0);
+        if (count > 0) summary = `${count} gyakorlat`;
+      }
 
-      item.dataset.dateKey = key;
-      item.innerHTML = `
+      cell.dataset.dateKey = key;
+      cell.innerHTML = `
         <div class="calendar-date">
           <span class="calendar-dayname">${d.toLocaleDateString('hu-HU', { weekday: 'short' })}</span>
-          <span class="calendar-datenum">${d.getFullYear()}. ${String(d.getMonth()+1).padStart(2,'0')}. ${String(d.getDate()).padStart(2,'0')}.</span>
+          <span class="calendar-datenum">${dayNum}</span>
         </div>
         <div class="calendar-summary">${summary}</div>
       `;
 
-      item.addEventListener('click', () => {
+      cell.addEventListener('click', () => {
         selectCalendarDay(key);
       });
 
-      list.appendChild(item);
-      d.setDate(d.getDate() + 1);
+      grid.appendChild(cell);
     }
 
     if (label) {
@@ -256,6 +290,10 @@
   function selectCalendarDay(key) {
     selectedDateKey = key;
     const data = calendarData[key];
+    const d = new Date(key);
+
+    // ha másik hónapot kattintottunk, arra a hónapra ugrunk
+    calendarMonth = new Date(d.getFullYear(), d.getMonth(), 1);
 
     if (data) {
       mainExercises = [...data.main];
@@ -270,6 +308,24 @@
     renderExercisePool();
     renderDropzones();
     renderCalendar();
+  }
+
+  function setupCalendarNav() {
+    const prev = qs('#calendarPrev');
+    const next = qs('#calendarNext');
+
+    if (prev) {
+      prev.addEventListener('click', () => {
+        calendarMonth.setMonth(calendarMonth.getMonth() - 1);
+        renderCalendar();
+      });
+    }
+    if (next) {
+      next.addEventListener('click', () => {
+        calendarMonth.setMonth(calendarMonth.getMonth() + 1);
+        renderCalendar();
+      });
+    }
   }
 
   // ---------- LOCK GOMB ----------
@@ -314,11 +370,14 @@
     if (!panel) return;
 
     if (!selectedDateKey) {
-      selectedDateKey = dateKey(new Date());
+      const today = new Date();
+      selectedDateKey = dateKey(today);
+      calendarMonth = new Date(today.getFullYear(), today.getMonth(), 1);
     }
 
     renderExercisePool();
     renderDropzones();
+    setupCalendarNav();
     renderCalendar();
     initLockButton();
   }

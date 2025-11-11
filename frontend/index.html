@@ -168,8 +168,28 @@
               <span id="calendarCurrentLabel">–</span>
             </div>
 
-            <div class="calendar-list" id="calendarList"></div>
+            <!-- Hónap fejléc: prev / month / next -->
+            <div class="calendar-header">
+              <button class="cal-nav" id="calendarPrev">‹</button>
+              <div class="calendar-month" id="calendarMonthLabel">–</div>
+              <button class="cal-nav" id="calendarNext">›</button>
+            </div>
+
+            <!-- Hét napjai (Hétfő az első) -->
+            <div class="calendar-weekdays">
+              <span>H</span>
+              <span>K</span>
+              <span>Sze</span>
+              <span>Cs</span>
+              <span>P</span>
+              <span>Szo</span>
+              <span>V</span>
+            </div>
+
+            <!-- Havi grid (7x6) -->
+            <div class="calendar-grid calendar-list" id="calendarList"></div>
           </section>
+
         </div>
       </article>
     </section>

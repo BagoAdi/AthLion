@@ -101,25 +101,64 @@ if(langToggleBtn){
 }
 
 
-// Food search (demo)
-const FOOD=[
-  { n:'Csirkemell (sült, 100g)', kcal:165, p:31, c:0, f:3.6 },
-  { n:'Zabpehely (50g)', kcal:190, p:7, c:32, f:3 },
-  { n:'Rizs, főtt (150g)', kcal:195, p:4, c:43, f:0.4 },
-  { n:'Tojás (1 db)', kcal:78, p:6, c:0.6, f:5 },
-  { n:'Túró (100g)', kcal:98, p:12, c:3, f:4 },
-  { n:'Banán (1 közepes)', kcal:105, p:1.3, c:27, f:0.4 },
-  { n:'Fehérje shake (30g)', kcal:120, p:24, c:3, f:1.5 }
-];
-function renderFood(list){ const box=$('#foodResults'); if(!box) return; box.innerHTML=''; if(!list.length){ box.innerHTML=`<div style="padding:10px;color:var(--muted)">${LANG==='hu'?'Nincs találat.':'No results.'}</div>`; return; }
-  list.forEach(item=>{ const row=document.createElement('div'); row.className='result'; row.innerHTML=`<span>${item.n} <small style="opacity:.7">(${item.kcal} kcal • P${item.p}/C${item.c}/F${item.f})</small></span><button>${(LANG==='hu')?'Hozzáad':'Add'}</button>`; row.querySelector('button').addEventListener('click',()=>addMealToDay(activeDayIndex,{name:item.n,kcal:item.kcal})); box.appendChild(row); }); }
-function doFoodSearch(){ if (!$('#foodQuery')) return; const q=($('#foodQuery').value||'').toLowerCase().trim(); const res=q?FOOD.filter(x=>x.n.toLowerCase().includes(q)):FOOD; renderFood(res); }
-const foodSearchBtn = $('#foodSearch');
-if(foodSearchBtn){
-    foodSearchBtn.addEventListener('click',doFoodSearch);
-    $('#foodQuery').addEventListener('keydown',e=>{ if(e.key==='Enter') doFoodSearch(); });
-    doFoodSearch();
-}
+
+    async function doFoodSearch() {
+      const q = ($('#foodQuery').value || '').toLowerCase().trim();
+      const box = $('#foodResults');
+      
+      // Kezdeti állapot vagy túl rövid keresés
+      if (q.length < 3) {
+        box.innerHTML = `<div style="padding:10px;color:var(--muted)">${LANG==='hu'?'Írj be legalább 3 karaktert a kereséshez.':'Type at least 3 characters to search.'}</div>`;
+        return;
+      }
+
+      box.innerHTML = `<div style="padding:10px;color:var(--muted)">${LANG==='hu'?'Keresés...':'Searching...'}</div>`;
+
+      try {
+        // --- API HÍVÁS ---
+        const res = await fetch(`/api/v1/foods/search?q=${encodeURIComponent(q)}`);
+        
+        if (!res.ok) {
+            // Hiba esetén a szerver válaszának kiírása
+            const errData = await res.json();
+            throw new Error(errData.detail || 'Hálózati hiba');
+        }
+        
+        const list = await res.json();
+        
+        // --- Eredmények megjelenítése ---
+        box.innerHTML = ''; // Lista kiürítése
+        
+        if (!list.length) {
+          box.innerHTML = `<div style="padding:10px;color:var(--muted)">${LANG==='hu'?'Nincs találat.':'No results.'}</div>`;
+          return;
+        }
+
+        // Találatok beillesztése a listába
+        list.forEach(item => {
+          const row = document.createElement('div');
+          row.className = 'result';
+          
+          // API válasz (item.kcal_100g stb.) alapján építjük a HTML-t
+          // A Math.round() kerekíti a számokat, ha törtek lennének
+          const kcal = Math.round(item.kcal_100g || 0);
+          const p = Math.round(item.protein_100g || 0);
+          const c = Math.round(item.carbs_100g || 0);
+          const f = Math.round(item.fat_100g || 0);
+
+          row.innerHTML = `<span>${item.food_name} <small style="opacity:.7">(${kcal} kcal • P${p}/C${c}/F${f})</small></span><button>${(LANG==='hu')?'Hozzáad':'Add'}</button>`;
+          
+          // Gomb eseménykezelője: hozzáadás a napi listához
+          row.querySelector('button').addEventListener('click', () => addMealToDay(activeDayIndex, { name: item.food_name, kcal: kcal }));
+          
+          box.appendChild(row);
+        });
+
+      } catch (err) {
+        console.error(err);
+        box.innerHTML = `<div style="padding:10px;color:var(--err)">${LANG==='hu'?'Hiba a keresés közben.':'Error during search.'}</div>`;
+      }
+    }
 
 
 // Weekly diet tabs (demo)

@@ -24,13 +24,13 @@ class AllergenOut(BaseModel):
     allergen_id: int
     allergen_name: str
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class DietTypeOut(BaseModel):
     diet_type_id: int
     diet_name: str
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class FoodItemOut(BaseModel):
     food_id: int
@@ -44,7 +44,7 @@ class FoodItemOut(BaseModel):
     diet_types: List[DietTypeOut] = [] # Ezt külön töltjük fel
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 @router.get("/search", response_model=List[FoodItemOut])
 def search_foods(

@@ -37,11 +37,17 @@ form.addEventListener("submit", async (e) => {
       throw new Error(msgText);
     }
 
+
     // Sikeres login
     msg.style.color = "var(--ok)";
     msg.textContent = "✅ Sikeres bejelentkezés!";
     localStorage.setItem("token", payload.access_token);
+
+    // üdvözléshez elmentjük az emailt
+    localStorage.setItem("user_email", email);
+
     setTimeout(() => (window.location.href = "index.html"), 1200);
+
 
   } catch (err) {
     msg.style.color = "var(--err)";

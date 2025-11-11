@@ -9,7 +9,7 @@ from app.api.v1.routes import users as users_routes
 from app.api.v1.routes import profiles as profiles_routes
 from app.api.v1.routes import diet as diet_routes
 from app.api.v1.routes import setup as setup_routes
-from app.api.v1.routes import foods as food_routes
+from app.api.v1.routes import food as food_routes
 
 app = FastAPI()
 

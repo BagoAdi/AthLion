@@ -8,7 +8,8 @@ from app.api.v1.routes import auth as auth_routes
 from app.api.v1.routes import users as users_routes
 from app.api.v1.routes import profiles as profiles_routes
 from app.api.v1.routes import diet as diet_routes
-from app.api.v1.routes import setup as setup_routes # <-- 1. ÚJ SOR
+from app.api.v1.routes import setup as setup_routes
+from app.api.v1.routes import foods as food_routes
 
 app = FastAPI()
 
@@ -25,7 +26,8 @@ app.include_router(auth_routes.router, prefix="/api/v1")
 app.include_router(users_routes.router, prefix="/api/v1")
 app.include_router(profiles_routes.router, prefix="/api/v1")
 app.include_router(diet_routes.router, prefix="/api/v1")
-app.include_router(setup_routes.router, prefix="/api/v1") # <-- 2. ÚJ SOR
+app.include_router(setup_routes.router, prefix="/api/v1")
+app.include_router(food_routes.router, prefix="/api/v1")
 
 # 2) Frontend (statikus) mount
 # A projekt gyökeréből nézve a 'frontend' mappát szolgáljuk ki.

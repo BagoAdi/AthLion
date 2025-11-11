@@ -10,3 +10,9 @@ class Allergen(Base):
     allergen_name = Column(String(100), nullable=False)
     
     user_links = relationship("UserAllergy", back_populates="allergen", cascade="all, delete-orphan")
+
+    food_items = relationship(
+        "FoodItem",
+        secondary="food_allergen_link", # String hivatkozás
+        back_populates="allergens"
+    )

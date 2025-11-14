@@ -6,6 +6,10 @@
 /******************* app.js (kimenet) *******************/
 const $ = (s, r=document)=>r.querySelector(s); const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
 
+// ÚJ: Globális állapot a makrók számolásához
+let targetMacros = { cal: 0, p: 0, c: 0, f: 0 };
+let currentMacros = { cal: 0, p: 0, c: 0, f: 0 };
+
 // Slider
 const track = $('#track');
 if (track) { // Csak akkor fut, ha az elem létezik (nem a login oldalon van)
@@ -89,6 +93,12 @@ function t(){
     setText('dWed', S.dWed);
     setText('dFri', S.dFri);
 
+    // Nyelvváltó gomb szövegének beállítása
+    const langBtn = $('#langToggle');
+    if (langBtn) {
+      langBtn.textContent = (LANG === 'hu') ? 'Magyar' : 'English';
+    }
+
     // Diet funkciók csak akkor fognak csinálni bármit, ha az elemek léteznek
     buildDietTabs(); 
     renderDayMeals(); 
@@ -97,9 +107,35 @@ function t(){
 
 const langToggleBtn = $('#langToggle');
 if(langToggleBtn){
-    langToggleBtn.addEventListener('click',()=>{ LANG=(LANG==='hu')?'en':'hu'; t(); });
+    langToggleBtn.addEventListener('click', () => { 
+      LANG = (LANG === 'hu') ? 'en' : 'hu'; 
+      t();
+      langToggleBtn.textContent = (LANG === 'hu') ? 'Magyar' : 'English';
+      langToggleBtn.blur(); 
+    });
 }
 
+// ÚJ: Függvény a makró kijelzők frissítésére
+function updateMacroDisplays() {
+    // Újraszámoljuk az aktuális nap alapján
+    // 1. Reset: Kezdjük a teljes napi céllal
+    currentMacros = { ...targetMacros }; // Lemásoljuk a célokat
+    
+    // 2. Napi tételek kivonása
+    const itemsToday = WEEK[activeDayIndex] || [];
+    itemsToday.forEach(item => {
+        currentMacros.cal -= (item.kcal || 0);
+        currentMacros.p -= (item.p || 0);
+        currentMacros.c -= (item.c || 0);
+        currentMacros.f -= (item.f || 0);
+    });
+
+    // 3. Kijelzők frissítése (a div-ekbe írás)
+    if ($('#cal')) $('#cal').textContent = Math.round(currentMacros.cal);
+    if ($('#p')) $('#p').textContent = Math.round(currentMacros.p);
+    if ($('#c')) $('#c').textContent = Math.round(currentMacros.c);
+    if ($('#f')) $('#f').textContent = Math.round(currentMacros.f);
+}
 
 
     async function doFoodSearch() {
@@ -149,7 +185,14 @@ if(langToggleBtn){
           row.innerHTML = `<span>${item.food_name} <small style="opacity:.7">(${kcal} kcal • P${p}/C${c}/F${f})</small></span><button>${(LANG==='hu')?'Hozzáad':'Add'}</button>`;
           
           // Gomb eseménykezelője: hozzáadás a napi listához
-          row.querySelector('button').addEventListener('click', () => addMealToDay(activeDayIndex, { name: item.food_name, kcal: kcal }));
+          row.querySelector('button').addEventListener('click', () => addMealToDay(activeDayIndex, { 
+            name: item.food_name, 
+            kcal: kcal, 
+            p: p, 
+            c: c, 
+            f: f 
+        }));
+          updateMacroDisplays();
           
           box.appendChild(row);
         });
@@ -165,9 +208,18 @@ if(langToggleBtn){
 const DAYS_KEYS=['mon','tue','wed','thu','fri','sat','sun'];
 let activeDayIndex=0; const WEEK=DAYS_KEYS.map(()=>[]);
 function dayName(key){ return (LANG==='hu')?({mon:'Hétfő',tue:'Kedd',wed:'Szerda',thu:'Csütörtök',fri:'Péntek',sat:'Szombat',sun:'Vasárnap'})[key]:({mon:'Monday',tue:'Tuesday',wed:'Wednesday',thu:'Thursday',fri:'Friday',sat:'Saturday',sun:'Sunday'})[key]; }
-function buildDietTabs(){ const tabs=$('#dietTabs'); if(!tabs) return; tabs.innerHTML=''; DAYS_KEYS.forEach((k,i)=>{ const b=document.createElement('button'); b.className='tab'+(i===activeDayIndex?' active':''); b.textContent=dayName(k); b.addEventListener('click',()=>{ activeDayIndex=i; buildDietTabs(); renderDayMeals(); }); tabs.appendChild(b); }); }
+function buildDietTabs(){ const tabs=$('#dietTabs'); if(!tabs) return; tabs.innerHTML=''; DAYS_KEYS.forEach((k,i)=>{ const b=document.createElement('button'); b.className='tab'+(i===activeDayIndex?' active':''); b.textContent=dayName(k); b.addEventListener('click', () => {
+    activeDayIndex = i;
+    buildDietTabs();
+    renderDayMeals();
+    updateMacroDisplays(); // <-- EZ AZ ÚJ SOR: Újraszámolás napváltáskor
+}); tabs.appendChild(b); }); }
 function renderDayMeals(){ const box=$('#dietDayList'); if(!box) return; const items=WEEK[activeDayIndex]; box.innerHTML=''; if(!items.length){ const empty=document.createElement('div'); empty.style.cssText='padding:12px 20px;color:var(--muted)'; empty.textContent=(LANG==='hu'?'Nincs még tétel ezen a napon.':'No items yet for this day.'); box.appendChild(empty); return; } items.forEach(obj=>{ const row=document.createElement('div'); row.className='meal-item'; row.innerHTML=`<span>${obj.name}</span><span class="kcal">${obj.kcal} kcal</span>`; box.appendChild(row); }); }
-function addMealToDay(i,item){ WEEK[i].push(item); renderDayMeals(); }
+function addMealToDay(i, item) {
+    WEEK[i].push(item);      // Hozzáadás a napi listához
+    renderDayMeals();        // Napi lista újrarajzolása
+    updateMacroDisplays(); // <-- EZ AZ ÚJ SOR: Makrók újraszámolása
+}
 buildDietTabs(); renderDayMeals();
 
 // Drag & Drop (demo
@@ -176,9 +228,29 @@ buildDietTabs(); renderDayMeals();
 t(); 
 
 
-// --- TÖRÖLT KÓD: Gyorsindító (Quickstart) Kalkulátor ---
-// A "Start" gomb logikáját töröltük, mert a számítás automatikusan történik
-// --- TÖRÖLT KÓD VÉGE ---
+const foodSearchBtn = $('#foodSearch');
+const foodQueryInput = $('#foodQuery');
+
+// Csak akkor fussanak, ha a diet.html oldalon vagyunk
+if (foodSearchBtn && foodQueryInput) {
+
+    // 1. Keresés gombra kattintás
+    foodSearchBtn.addEventListener('click', doFoodSearch);
+
+    // 2. Enter leütése a szövegmezőben
+    foodQueryInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+            doFoodSearch();
+        }
+    });
+
+    // 3. (OPCIONÁLIS, de ajánlott) Gépelés közbeni keresés
+    //    Ez váltja ki a keresést gépelés közben (ahogy a 3-karakteres limit is sugallja)
+    foodQueryInput.addEventListener('input', doFoodSearch);
+
+    // 4. Töltsük be az alap "3 karakter" üzenetet az oldal betöltésekor
+    doFoodSearch();
+}
 
 
 /* --- ATHLION AUTH INIT (Bejelentkezés-kezelő) --- */
@@ -240,11 +312,16 @@ document.addEventListener("DOMContentLoaded", () => {
             return res.json();
         })
         .then(data => {
-            // Sikeres válasz: Töltsük ki a makró űrlapot
-            if ($('#cal')) $('#cal').value = data.calories;
-            if ($('#p')) $('#p').value = data.protein;
-            if ($('#c')) $('#c').value = data.carbs;
-            if ($('#f')) $('#f').value = data.fat;
+            // 1. Adatok mentése a globális CÉL állapotba
+            targetMacros = {
+                cal: data.calories,
+                p: data.protein,
+                c: data.carbs,
+                f: data.fat
+            };
+            
+            // 2. Kijelzők frissítése (ami már az új számoló függvényt hívja)
+            updateMacroDisplays(); 
         })
         .catch(err => {
             // Ez az a hiba, amit láttál (pl. "Active DietProfile not found")

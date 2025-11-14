@@ -44,7 +44,6 @@
     <section class="panel" id="diet">
       <div class="card glass hero">
         <h1 id="dietTitle">Étrend kezelő</h1>
-        <p id="dietSubtitle">Makró-célok, heti terv, bevásárlólista.</p>
       </div>
 
       <div class="panel-inner">
@@ -52,15 +51,24 @@
         <section class="card glass form">
           <h3 id="macroTitle">Makró célok</h3>
           <label for="cal" id="calLabel">Napi kalória</label>
-          <input id="cal" type="number" placeholder="2400" />
+          <div id="cal" class="macro-display"></div>
 
           <div class="macro-grid">
-            <input id="p" type="number" placeholder="Fehérje (g)" />
-            <input id="c" type="number" placeholder="Szénhidrát (g)" />
-            <input id="f" type="number" placeholder="Zsír (g)" />
+            <div>
+              <label for="p">Fehérje (g)</label>
+              <div id="p" class="macro-display-small"></div>
+            </div>
+            <div>
+              <label for="c">Szénhidrát (g)</label>
+              <div id="c" class="macro-display-small"></div>
+            </div>
+            <div>
+              <label for="f">Zsír (g)</label>
+              <div id="f" class="macro-display-small"></div>
+            </div>
           </div>
 
-          <button class="btn" id="saveMacros">Mentés</button>
+          
           <p id="macroMsg"></p>
 
           <h3 id="foodSearchTitle" style="margin-top:16px">Étel kereső</h3>

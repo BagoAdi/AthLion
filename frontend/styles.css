@@ -1,4 +1,4 @@
-    /******************* styles.css (kimenet) *******************/
+/******************* styles.css (kimenet) *******************/
     :root{
       --gold-1: #3E8EDE;     /* kék akcentus */
       --gold-2: #6ECB6C;     /* zöld akcentus */
@@ -36,12 +36,50 @@
     .glass{background:var(--glass-bg);border:1px solid var(--glass-stroke);backdrop-filter:saturate(140%) blur(18px);
       -webkit-backdrop-filter:saturate(140%) blur(18px);box-shadow:var(--shadow);border-radius:var(--radius)}
 
-    .topbar{position:fixed;inset:16px 16px auto 16px;height:76px;display:flex;align-items:center;gap:14px;padding:10px 14px;z-index:60}
-    .brand{display:flex;align-items:center;gap:12px}
+    /* --- INNEN MÓDOSULT --- */
+    .topbar {
+      position: fixed;
+      inset: 16px 16px auto 16px;
+      height: 76px;
+      
+      /* A .topbar lett a 3-oszlopos GRID konténer */
+      display: grid;
+      grid-template-columns: 1fr auto 1fr; /* Bal(1fr), Közép(auto), Jobb(1fr) */
+      
+      align-items: center;
+      gap: 14px;
+      padding: 10px 14px;
+      z-index: 60;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      
+      /* Helyezés a bal oszlopba (1) */
+      grid-column: 1 / 2;
+      justify-self: start; /* Igazítás balra */
+    }
+    /* --- EDDIG MÓDOSULT --- */
+
     .brand img{width:48px;height:48px;object-fit:contain;filter:drop-shadow(0 6px 14px rgba(212,175,55,.35))}
     .brand .title{font-weight:800;letter-spacing:.4px}
     .brand .title span{color:var(--gold-1)}
-    .nav{margin-left:auto;display:flex;gap:10px;align-items:center}
+
+    /* A .nav-ra már nincs szükség a fő layout-hoz */
+    .nav { }
+
+    /* --- ÚJ SZABÁLY --- */
+    /* A középső linkek csoportja */
+    .nav-main-links {
+      grid-column: 2 / 3; /* Helyezés a középső oszlopba (2) */
+      display: flex;
+      gap: 10px;
+      justify-self: center; /* Vízszintesen középre igazítás */
+    }
+    /* --- ÚJ SZABÁLY VÉGE --- */
+    
     .ghost {
       border: 1px solid var(--glass-stroke); /* 1. Használjuk az üveg keretet */
       background: var(--glass-bg);         /* 2. Használjuk az üveg hátteret */
@@ -59,6 +97,27 @@
       color: #fff; /* 6. Fényes fehér szöveg hover esetén */
       text-decoration: none;
     }
+
+    .ghost.active {
+      /* Hasonló, mint a .tab.active, a kék kiemelő színnel */
+      background: linear-gradient(135deg, rgba(62,142,222,.25), rgba(110,203,108,.2));
+      border-color: var(--gold-1); /* kék keret */
+      color: var(--text); /* Fényes fehér szöveg/ikon */
+      transform: translateY(-1px);
+    }
+
+    .nav-icon {
+      width: 20px; /* Ikon méretének beállítása */
+      height: 20px;
+      display: block; /* Felesleges térközök eltávolítása */
+    }
+
+    /* Az ikon-gomboknak négyzetesebb gomb-stílus kell */
+    .ghost-icon {
+      padding: 10px; /* 14px helyett 10px, hogy szép négyzet legyen */
+      line-height: 0; /* Biztosítja, hogy az ikon középen legyen */
+    }
+
     .cta{padding:10px 16px;border-radius:16px;background:linear-gradient(135deg,var(--gold-1),var(--gold-2));color:#161616;font-weight:800;border:none;cursor:pointer}
     .lang {
       border: 1px solid var(--glass-stroke); /* 1. Üveg keret */
@@ -411,11 +470,16 @@
   margin-left:8px;
   white-space:nowrap;
 }
+
+/* --- INNEN MÓDOSULT --- */
 .nav-auth-group{
+  grid-column: 3 / 4; /* Helyezés a jobb oszlopba (3) */
   display:flex;
   gap:10px;
   align-items:center;
+  justify-self: end; /* Jobbra igazítás a cellán belül */
 }
+/* --- EDDIG MÓDOSULT --- */
 
 
 .calendar-month {

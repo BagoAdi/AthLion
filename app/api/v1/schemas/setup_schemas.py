@@ -10,8 +10,27 @@ class SetupIn(BaseModel):
     program_time: str     # pl. "30-45 perc"
     preference: str       # pl. "Vegyes"
 
-# --- ÚJ OSZTÁLY HOZZÁADÁSA ---
-# Ezzel definiáljuk a kimeneti JSON-t: {"status": "valami"}
 class SetupOut(BaseModel):
     status: str
-# --- ÚJ OSZTÁLY VÉGE ---
+
+class ProfileOut(BaseModel):
+    """
+    Séma a jelenlegi, aktív profilbeállítások visszaadására.
+    """
+    start_weight_kg: float
+    target_weight_kg: float
+    goal_type: str
+    load_level: str
+
+    class Config:
+        from_attributes = True
+
+class ProfileUpdate(BaseModel):
+    """
+    Séma a profilbeállítások frissítéséhez (minden opcionális).
+    """
+    start_weight_kg: Optional[float] = None
+    goal_type: Optional[str] = None
+    target_weight_kg: Optional[float] = None
+    load_level: Optional[str] = None
+

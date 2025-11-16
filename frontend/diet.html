@@ -6,40 +6,39 @@
   <title>Étrend kezelő – ATHLION</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" type="image/png" href="favicon.png">
 </head>
 <body>
   <header class="topbar glass">
-        <div class="brand">
-            <a href="index.html" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit">
-            <img src="athlion_logo.png" alt="ATHLION logó" />
-            <div class="title">ATH<span>LION</span></div>
-            </a>
-        </div>
+    <div class="brand">
+      <a href="index.html" style="display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit">
+        <img src="athlion_logo.png" alt="ATHLION logó" />
+        <div class="title">ATH<span>LION</span></div>
+      </a>
+    </div>
 
-        <nav class="nav">
-            <!-- Home + oldalak -->
-            <a href="index.html" class="ghost" id="navHome">Kezdőlap</a>
-            <a href="diet.html" class="ghost" id="navDiet">Étrend</a>
-            <a href="workout.html" class="ghost" id="navWorkout">Edzésterv</a>
+    <div class="nav-main-links">
+        <a href="diet.html" class="ghost active" id="navDiet">Étrend</a>
+        <a href="index.html" class="ghost ghost-icon" id="navHome" title="Kezdőlap">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="nav-icon">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+          </svg>
+        </a>
+        <a href="workout.html" class="ghost" id="navWorkout">Edzésterv</a>
+    </div>
 
-            <!-- Nyelvváltó (majd később bekötjük újra, most maradhat) -->
-            <button class="lang" id="langToggle">HU/EN</button>
+    <div class="nav-auth-group">
+        <a href="profile.html" class="ghost" id="navProfile">Profil</a>
+        <button class="lang" id="langToggle">HU/EN</button> 
+        
+        <span class="welcome" id="welcomeText" style="display:none"></span>
+        
+        <a href="register.html" class="ghost" id="navRegister">Regisztráció</a>
+        <a href="login.html" class="ghost" id="navSignin">Bejelentkezés</a>
 
-            <!-- Auth rész -->
-            <div class="nav-auth-group">
-            <span class="welcome" id="welcomeText" style="display:none"></span>
-
-            <!-- vendég állapot -->
-            <a href="register.html" class="ghost" id="navRegister">Regisztráció</a>
-            <a href="login.html" class="ghost" id="navSignin">Bejelentkezés</a>
-
-            <!-- belépve állapot -->
-            <button class="ghost" id="navLogout" style="display:none">Kijelentkezés</button>
-            </div>
-        </nav>
-    </header>
-
-
+        <button class="ghost" id="navLogout" style="display:none">Kijelentkezés</button>
+    </div>
+  </header>
   <main class="page">
     <section class="panel" id="diet">
       <div class="card glass hero">
@@ -47,7 +46,6 @@
       </div>
 
       <div class="panel-inner">
-        <!-- BAL: makrók + étel kereső -->
         <section class="card glass form">
           <h3 id="macroTitle">Makró célok</h3>
           <label for="cal" id="calLabel">Napi kalória</label>
@@ -79,7 +77,6 @@
           <div class="results" id="foodResults"></div>
         </section>
 
-        <!-- JOBB: heti étrend -->
         <section class="card glass meal-list">
           <h3 id="weeklyDietTitle">Heti étrend</h3>
           <div class="tabs" id="dietTabs"></div>

@@ -354,19 +354,25 @@ const EXERCISES = [
   { id: 'cardio', name: 'Kardió gép (futópad / ellipszis)', tag: 'Kardió' }
 ];
 
-// ===== NAV AUTH UI =====
-
 function updateAuthUI() {
   const token = localStorage.getItem('token');
 
+  // Felső navigációs sáv
   const navRegister = $('#navRegister');
   const navSignin   = $('#navSignin');
   const navLogout   = $('#navLogout');
   const welcome     = $('#welcomeText');
+  const navProfile  = $('#navProfile'); // --- 1. ÚJ SOR: Profil gomb kiválasztása
+
+  // Középső (Hero) gombok
+  const heroRegister = $('#heroRegister');
+  const heroLogin    = $('#heroLogin');
+
 
   if (!welcome || !navLogout) return; // ha nem ezen az oldalon vagyunk
 
   if (token) {
+    // --- FELHASZNÁLÓ BE VAN JELENTKEZVE ---
     const name  = localStorage.getItem('user_name');
     const email = localStorage.getItem('user_email');
 
@@ -378,19 +384,33 @@ function updateAuthUI() {
       label = `Szia, ${nick}!`;
     }
 
+    // Felső nav: Szia, Név + Kijelentkezés
     welcome.textContent = label;
-    welcome.style.display = 'inline-flex';
+    welcome.style.display = 'none'; // Üdvözlő szöveg elrejtve (ezt kérted korábban)
 
     if (navRegister) navRegister.style.display = 'none';
     if (navSignin)   navSignin.style.display   = 'none';
     navLogout.style.display = 'inline-flex';
+    if (navProfile)  navProfile.style.display  = 'inline-flex'; // --- 2. ÚJ SOR: Profil mutatása
+
+    // Hero gombok: elrejtve
+    if (heroRegister) heroRegister.style.display = 'none';
+    if (heroLogin)    heroLogin.style.display = 'none';
+
   } else {
+    // --- FELHASZNÁLÓ KI VAN LÉPVE (VENDÉG) ---
+    
+    // Felső nav: Reg/Login mutatása
     welcome.textContent = '';
     welcome.style.display = 'none';
-
     if (navRegister) navRegister.style.display = 'inline-flex';
     if (navSignin)   navSignin.style.display   = 'inline-flex';
     navLogout.style.display = 'none';
+    if (navProfile)  navProfile.style.display  = 'none'; // --- 3. ÚJ SOR: Profil elrejtése
+
+    // Hero gombok: Reg/Login mutatása
+    if (heroRegister) heroRegister.style.display = 'inline-flex';
+    if (heroLogin)    heroLogin.style.display = 'inline-flex';
   }
 }
 

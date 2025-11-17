@@ -1,33 +1,43 @@
-// workout.js – edzésterv-összeállító + havi naptár
-
 (function () {
-  const qs = (sel, root = document) => root.querySelector(sel);
+  const qs  = (sel, root = document) => root.querySelector(sel);
   const qsa = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  // Ha máshol nincs beállítva, default magyar
   let LANG = window.LANG || 'hu';
 
-  // Demo gyakorlatok – backendről / DB-ből később simán cserélhető
-  const EXERCISES = [
-    { id: 'squat', name: 'Guggolás', tag: 'Láb' },
-    { id: 'bench', name: 'Fekvenyomás', tag: 'Mell' },
-    { id: 'deadlift', name: 'Felhúzás', tag: 'Hát' },
-    { id: 'ohp', name: 'Vállnyomás', tag: 'Váll' },
-    { id: 'row', name: 'Evezés döntött törzzsel', tag: 'Hát' },
-    { id: 'pullup', name: 'Húzódzkodás', tag: 'Hát' },
-    { id: 'dip', name: 'Tolódzkodás', tag: 'Mell/Kar' },
-    { id: 'lunge', name: 'Kitörés', tag: 'Láb' },
-    { id: 'plank', name: 'Plank', tag: 'Core' },
-    { id: 'cardio', name: 'Kardió gép (futópad / ellipszis)', tag: 'Kardió' }
-  ];
+  // --- STATE ---
+
+  // backendről jövő gyakorlatok (csak edzőterem mód)
+  let EXERCISES = [];
+
+  // aktuális mód: 'gym' vagy 'cardio'
+  let workoutMode = 'gym';
+
+  // aktuális edzésnap téma: push | pull | legs
+  let dayTheme = 'push';
 
   const TRAINING_SCHEDULES = {
     'Könnyű':  [1, 4],              // H, Cs
     'Közepes': [1, 3, 5],           // H, Sze, P
     'Nehéz':   [1, 2, 4, 5, 6]      // H, K, Cs, P, Szo
   };
+  // Push–Pull–Legs ciklus
+  const WORKOUT_SPLIT = ['push', 'pull', 'legs'];
+
+  const DIFFICULTY_MAP = {
+    'Könnyű': 'beginner',
+    'Közepes': 'intermediate',
+    'Nehéz': 'expert'
+  };
 
   let loadLevel = null;
+
+  // Aktuális mód: 'gym' | 'cardio' | null
+  // Csak gym napokra: 'push' | 'pull' | 'legs'
+
+  // Kardió adatok
+  let cardioActivities = [];
+  let cardioSelection = null;
+
 
   async function fetchLoadLevel() {
     try {
@@ -38,13 +48,11 @@
 
       const data = await res.json();
       loadLevel = data.training_profile?.load_level || "Közepes";
-
     } catch (err) {
       console.error(err);
-      loadLevel = "Közepes"; // fallback
+      loadLevel = "Közepes";
     }
   }
-
 
 
   // builder state
@@ -80,19 +88,142 @@
 
   // ---------- GYAKORLATLISTA ----------
 
+    async function loadGymExercises() {
+    try {
+      const res = await fetch("/api/v1/exercises", {
+        credentials: "include"
+      });
+      if (!res.ok) throw new Error("Hiba az edzésgyakorlatok lekérésénél");
+      EXERCISES = await res.json();
+    } catch (err) {
+      console.error(err);
+      EXERCISES = [];
+    }
+  }
+
+  async function loadCardioActivities() {
+    try {
+      const res = await fetch("/api/v1/physical_activities", {
+        credentials: "include"
+      });
+      if (!res.ok) throw new Error("Hiba a kardió aktivitások lekérésénél");
+      const data = await res.json();
+
+      // pl. szűrés, hogy lawn/gardening ne legyen
+      cardioActivities = data.filter(a => {
+        const name = (a.name || a.specific_activity || "").toLowerCase();
+        return !name.includes("lawn") && !name.includes("gardening");
+      });
+    } catch (err) {
+      console.error(err);
+      cardioActivities = [];
+    }
+  }
+
+    async function fetchExercisesForTheme() {
+    // loadLevel a usertől jön: beginner / intermediate / expert-re konvertálunk
+    let level = "all";
+    if (loadLevel) {
+      const lvlMap = {
+        "Könnyű": "beginner",
+        "Közepes": "intermediate",
+        "Nehéz": "expert"
+      };
+      level = lvlMap[loadLevel] || "all";
+    }
+
+    const params = new URLSearchParams({
+      theme: dayTheme,
+      level: level,
+      limit: "100"
+    });
+
+    try {
+      const res = await fetch(`/api/v1/exercises?${params.toString()}`, {
+        credentials: "include"
+      });
+      if (!res.ok) throw new Error("Hiba a gyakorlatok lekérésénél");
+      const data = await res.json();
+
+      // backend: {id, name, level, force, primary_muscles, ...}
+      EXERCISES = data.map(ex => ({
+        id: ex.id.toString(),
+        name: ex.name,
+        tag: ex.primary_muscles || ex.category || ""
+      }));
+
+      renderExercisePool();
+    } catch (err) {
+      console.error(err);
+      // fallback: ha elszáll, EXERCISES maradhat üres vagy tehetsz ide pár default gyakszit
+    }
+  }
+
+  async function fetchCardioActivities() {
+    const select = qs('#cardioActivitySelect');
+    const meta   = qs('#cardioActivityMeta');
+    if (!select) return;
+
+    try {
+      const res = await fetch('/api/v1/physical_activities?limit=150', {
+        credentials: "include"
+      });
+      if (!res.ok) throw new Error("Hiba a kardió aktivitások lekérésénél");
+
+      const data = await res.json();
+      // data: {id, name, met, major_heading}
+      select.innerHTML = '';
+
+      data.forEach(act => {
+        const opt = document.createElement('option');
+        opt.value = act.id;
+        const label = act.major_heading
+          ? `${act.name} (${act.major_heading}, ${act.met.toFixed(1)} MET)`
+          : `${act.name} (${act.met.toFixed(1)} MET)`;
+        opt.textContent = label;
+        opt.dataset.met = act.met;
+        select.appendChild(opt);
+      });
+
+      if (data.length && meta) {
+        const first = data[0];
+        meta.textContent = `Becsült intenzitás: ${first.met.toFixed(1)} MET`;
+      }
+
+      select.addEventListener('change', () => {
+        const opt = select.selectedOptions[0];
+        if (!opt || !meta) return;
+        const met = opt.dataset.met;
+        meta.textContent = `Becsült intenzitás: ${Number(met).toFixed(1)} MET`;
+      });
+
+    } catch (err) {
+      console.error(err);
+      if (meta) meta.textContent = "Nem sikerült betölteni a kardió aktivitásokat.";
+    }
+  }
+
+
+
   function renderExercisePool() {
+    if (workoutMode !== 'gym') return;
     const pool = qs('#exercisePool');
     if (!pool) return;
     pool.innerHTML = '';
 
-    EXERCISES.forEach(ex => {
+    const list = filterExercisesForContext();
+
+    list.forEach(ex => {
       const pill = document.createElement('div');
       pill.className = 'exercise-pill';
       pill.draggable = !dayLocked;
       pill.dataset.id = ex.id;
+
+      const tag = getExerciseTag(ex);
+
       pill.innerHTML = `
         <span>${ex.name}</span>
-        <span class="tag">${ex.tag}</span>
+        <span class="tag">${tag}</span>
       `;
 
       pill.addEventListener('dragstart', e => {
@@ -100,7 +231,6 @@
         e.dataTransfer.setData('text/plain', ex.id);
       });
 
-      // Kattintással is hozzáadható
       pill.addEventListener('click', () => {
         if (dayLocked) return;
         addExerciseToBuilder('main', ex.id);
@@ -110,9 +240,183 @@
     });
   }
 
+
+  function determineDayTypeForNewGymDay() {
+    // csak a gym napok számítanak
+    const gymDaysSoFar = Object.values(calendarData).filter(d => d.mode === 'gym').length;
+    currentDayType = WORKOUT_SPLIT[gymDaysSoFar % WORKOUT_SPLIT.length];
+    updateDayTypeLabel();
+  }
+
+  function updateDayTypeLabel() {
+    const label = qs('#dayTypeLabel');
+    if (!label) return;
+
+    if (dayLocked && workoutMode === 'gym' && currentDayType) {
+      const mapHu = { push: 'Push day (mell/váll/tricepsz)', pull: 'Pull day (hát/bicepsz)', legs: 'Leg day (láb)' };
+      label.textContent = `Mai edzésnap: ${mapHu[currentDayType] || currentDayType}`;
+    } else if (!workoutMode) {
+      label.textContent = 'Válaszd ki a módot a fenti gombokkal.';
+    } else if (workoutMode === 'cardio') {
+      label.textContent = 'Kardió nap – válassz egy aktivitást a listából.';
+    } else if (workoutMode === 'gym' && currentDayType) {
+      const mapHu = { push: 'Push day (mell/váll/tricepsz)', pull: 'Pull day (hát/bicepsz)', legs: 'Leg day (láb)' };
+      label.textContent = `Mai edzésnap: ${mapHu[currentDayType] || currentDayType}`;
+    }
+  }
+
+  function filterExercisesForContext() {
+    if (workoutMode !== 'gym') return [];
+
+    const userDiff = DIFFICULTY_MAP[loadLevel] || null;
+
+    return EXERCISES.filter(ex => {
+      // nehézség
+      if (userDiff && ex.level && ex.level !== userDiff) return false;
+
+      if (!currentDayType) return true;
+
+      const prim = (ex.primaryMuscles && ex.primaryMuscles[0] || "").toLowerCase();
+
+      if (currentDayType === 'push') {
+        return ['chest', 'shoulders', 'triceps'].some(m => prim.includes(m));
+      }
+      if (currentDayType === 'pull') {
+        return ['back', 'biceps'].some(m => prim.includes(m));
+      }
+      if (currentDayType === 'legs') {
+        return ['quadriceps', 'hamstrings', 'glutes', 'calves', 'adductors'].some(m => prim.includes(m));
+      }
+      return true;
+    });
+  }
+
+  function getExerciseTag(ex) {
+    const level = ex.level || '';
+    const prim = ex.primaryMuscles && ex.primaryMuscles[0] ? ex.primaryMuscles[0] : '';
+    if (level && prim) return `${prim} · ${level}`;
+    if (prim) return prim;
+    if (level) return level;
+    return '';
+  }
+
+  //ui váltás
+  function setWorkoutMode(mode) {
+    if (dayLocked && selectedDateKey && calendarData[selectedDateKey]) {
+      // lezárt napnál ne lehessen módot váltani
+      return;
+    }
+
+    workoutMode = mode;
+    cardioSelection = null;
+
+    const gymBuilder = qs('#gymBuilder');
+    const cardioBuilder = qs('#cardioBuilder');
+    const btnCardio = qs('#modeCardio');
+    const btnGym = qs('#modeGym');
+
+    [btnCardio, btnGym].forEach(btn => btn && btn.classList.remove('active'));
+
+    if (mode === 'gym') {
+      btnGym && btnGym.classList.add('active');
+      if (gymBuilder) gymBuilder.style.display = '';
+      if (cardioBuilder) cardioBuilder.style.display = 'none';
+
+      // új nap → push/pull/legs ciklus
+      if (!calendarData[selectedDateKey]) {
+        determineDayTypeForNewGymDay();
+      }
+
+      renderExercisePool();
+      renderDropzones();
+    } else if (mode === 'cardio') {
+      btnCardio && btnCardio.classList.add('active');
+      if (cardioBuilder) cardioBuilder.style.display = '';
+      if (gymBuilder) gymBuilder.style.display = 'none';
+
+      renderCardioList();
+    } else {
+      if (gymBuilder) gymBuilder.style.display = 'none';
+      if (cardioBuilder) cardioBuilder.style.display = 'none';
+    }
+
+    updateDayTypeLabel();
+    updateLockButton();
+  }
+
+  function setupModeSelector() {
+    const btnCardio = qs('#modeCardio');
+    const btnGym = qs('#modeGym');
+
+    if (btnCardio) {
+      btnCardio.addEventListener('click', () => {
+        if (!cardioActivities.length) {
+          loadCardioActivities().then(() => {
+            setWorkoutMode('cardio');
+          });
+        } else {
+          setWorkoutMode('cardio');
+        }
+      });
+    }
+
+    if (btnGym) {
+      btnGym.addEventListener('click', () => {
+        if (!EXERCISES.length) {
+          loadGymExercises().then(() => {
+            setWorkoutMode('gym');
+          });
+        } else {
+          setWorkoutMode('gym');
+        }
+      });
+    }
+  }
+
+  //kardió lista render
+  function renderCardioList() {
+    const container = qs('#cardioList');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (!cardioActivities.length) {
+      const p = document.createElement('p');
+      p.className = 'muted small';
+      p.textContent = 'Nincs elérhető kardió aktivitás.';
+      container.appendChild(p);
+      return;
+    }
+
+    cardioActivities.forEach(act => {
+      const div = document.createElement('div');
+      div.className = 'cardio-item';
+
+      div.innerHTML = `
+        <span>${act.name || act.specific_activity}</span>
+        <span class="muted small">${act.mets ? act.mets + ' MET' : ''}</span>
+      `;
+
+      div.addEventListener('click', () => {
+        cardioSelection = act;
+        qsa('.cardio-item', container).forEach(el => el.classList.remove('selected'));
+        div.classList.add('selected');
+        updateLockButton();
+      });
+
+      container.appendChild(div);
+    });
+  }
+
+
   // ---------- DROPZÓNÁK ----------
 
   function renderDropzones() {
+      if (workoutMode !== 'gym') {
+      // gym UI rejtve
+      return;
+    }
+
     const mainZone = qs('#mainExercises');
     const extraZone = qs('#extraExercises');
     const info = qs('#lockInfo');
@@ -292,7 +596,14 @@
       }
 
       if (isSelected) cell.classList.add('active');
-      if (dayData) cell.classList.add('filled');
+      if (dayData) {
+        cell.classList.add('filled');
+        if (dayData.mode === 'gym') {
+          cell.classList.add('gym-day');
+        } else if (dayData.mode === 'cardio') {
+          cell.classList.add('cardio-day');
+        }
+      }
       if (isToday) cell.classList.add('today');
 
       // összegzés: hány gyakorlat
@@ -328,23 +639,70 @@
     const data = calendarData[key];
     const d = new Date(key);
 
-    // ha másik hónapot kattintottunk, arra a hónapra ugrunk
     calendarMonth = new Date(d.getFullYear(), d.getMonth(), 1);
 
     if (data) {
-      mainExercises = [...data.main];
-      extraExercises = [...data.extra];
       dayLocked = true;
+      workoutMode = data.mode || null;
+
+      if (workoutMode === 'gym') {
+        mainExercises = [...(data.main || [])];
+        extraExercises = [...(data.extra || [])];
+        currentDayType = data.dayType || null;
+
+        const gymBuilder = qs('#gymBuilder');
+        const cardioBuilder = qs('#cardioBuilder');
+        if (gymBuilder) gymBuilder.style.display = '';
+        if (cardioBuilder) cardioBuilder.style.display = 'none';
+        qs('#modeGym')?.classList.add('active');
+        qs('#modeCardio')?.classList.remove('active');
+
+        renderExercisePool();
+        renderDropzones();
+      } else if (workoutMode === 'cardio') {
+        cardioSelection = data.cardio || null;
+
+        const gymBuilder = qs('#gymBuilder');
+        const cardioBuilder = qs('#cardioBuilder');
+        if (cardioBuilder) cardioBuilder.style.display = '';
+        if (gymBuilder) gymBuilder.style.display = 'none';
+        qs('#modeCardio')?.classList.add('active');
+        qs('#modeGym')?.classList.remove('active');
+
+        renderCardioList();
+        // jelöljük szelektáltként, ha tudod az ID-t egyeztetni
+      }
     } else {
+      // új nap
+      dayLocked = false;
+      workoutMode = null;
+      currentDayType = null;
       mainExercises = [];
       extraExercises = [];
-      dayLocked = false;
+      cardioSelection = null;
+
+      const gymBuilder = qs('#gymBuilder');
+      const cardioBuilder = qs('#cardioBuilder');
+      if (gymBuilder) gymBuilder.style.display = 'none';
+      if (cardioBuilder) cardioBuilder.style.display = 'none';
+
+      qs('#modeCardio')?.classList.remove('active');
+      qs('#modeGym')?.classList.remove('active');
+
+      renderExercisePool();
+      renderDropzones();
     }
 
-    renderExercisePool();
-    renderDropzones();
+    updateDayTypeLabel();
     renderCalendar();
+    updateLockButton();
+
+    const label = qs('#calendarCurrentLabel');
+    if (label) {
+      label.textContent = prettyDate(new Date(selectedDateKey));
+    }
   }
+
 
   function setupCalendarNav() {
     const prev = qs('#calendarPrev');
@@ -368,38 +726,130 @@
 
   function updateLockButton() {
     const btn = qs('#lockDayBtn');
+    const info = qs('#lockInfo');
     if (!btn) return;
 
-    const total = mainExercises.length + extraExercises.length;
-    btn.disabled = dayLocked || mainExercises.length < 3 || total < 3;
-    btn.textContent = dayLocked ? 'Nap lezárva' : 'Nap lezárása';
+    if (dayLocked) {
+      btn.disabled = true;
+      btn.textContent = 'Nap lezárva';
+      if (info) info.textContent = 'Ez a nap lezárva. A naptárból visszanézheted, de nem módosítható.';
+      return;
+    }
+
+    if (!workoutMode) {
+      btn.disabled = true;
+      btn.textContent = 'Nap lezárása';
+      if (info) info.textContent = 'Először válaszd ki a módot (kardió vagy edzőtermi).';
+      return;
+    }
+
+    if (workoutMode === 'gym') {
+      const total = mainExercises.length + extraExercises.length;
+      btn.disabled = mainExercises.length < 3 || total < 3;
+      btn.textContent = 'Nap lezárása';
+      if (info) info.textContent = 'Válassz ki legalább 3 fő gyakorlatot a nap lezárásához.';
+    } else if (workoutMode === 'cardio') {
+      btn.disabled = !cardioSelection;
+      btn.textContent = 'Nap lezárása';
+      if (info) info.textContent = 'Válassz ki egy kardió aktivitást, majd zárd le a napot.';
+    }
   }
+
 
   function initLockButton() {
     const btn = qs('#lockDayBtn');
     if (!btn) return;
 
     btn.addEventListener('click', () => {
-      if (dayLocked) return;
-      if (mainExercises.length < 3) {
-        alert('Legalább 3 fő gyakorlat szükséges a nap lezárásához.');
-        return;
-      }
+      if (dayLocked || !workoutMode) return;
 
       const key = selectedDateKey || dateKey(new Date());
-      calendarData[key] = {
-        main: [...mainExercises],
-        extra: [...extraExercises]
-      };
+
+      if (workoutMode === 'gym') {
+        if (mainExercises.length < 3) {
+          alert('Legalább 3 fő gyakorlat szükséges a nap lezárásához.');
+          return;
+        }
+        calendarData[key] = {
+          mode: 'gym',
+          dayType: currentDayType,
+          main: [...mainExercises],
+          extra: [...extraExercises]
+        };
+      } else if (workoutMode === 'cardio') {
+        if (!cardioSelection) {
+          alert('Válassz ki egy kardió aktivitást.');
+          return;
+        }
+        calendarData[key] = {
+          mode: 'cardio',
+          cardio: { ...cardioSelection }
+        };
+      }
+
       dayLocked = true;
       renderDropzones();
       renderCalendar();
+      updateLockButton();
 
-      // IDE jön majd a backend POST /api/v1/workouts
+      // TODO: ide jöhet majd a backend POST /api/v1/workouts
     });
   }
 
+
   // ---------- INIT ----------
+
+  function setupModeToggle() {
+    const modeGym   = qs('#modeGym');
+    const modeCardio = qs('#modeCardio');
+    const gymBuilder = qs('#gymBuilder');
+    const cardioBuilder = qs('#cardioBuilder');
+
+    if (!modeGym || !modeCardio || !gymBuilder || !cardioBuilder) return;
+
+    const setMode = (mode) => {
+      workoutMode = mode;
+
+      modeGym.classList.toggle('active', mode === 'gym');
+      modeCardio.classList.toggle('active', mode === 'cardio');
+
+      gymBuilder.classList.toggle('hidden', mode !== 'gym');
+      cardioBuilder.classList.toggle('hidden', mode !== 'cardio');
+
+      if (mode === 'gym') {
+        fetchExercisesForTheme();
+      } else {
+        fetchCardioActivities();
+      }
+    };
+
+    modeGym.addEventListener('click', () => setMode('gym'));
+    modeCardio.addEventListener('click', () => setMode('cardio'));
+
+    // alapértelmezés: edzőterem
+    setMode('gym');
+  }
+
+  function setupThemeToggle() {
+    const container = qs('#gymThemeToggle');
+    if (!container) return;
+
+    const buttons = qsa('button[data-theme]', container);
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const theme = btn.dataset.theme;
+        if (!theme) return;
+
+        dayTheme = theme;
+        buttons.forEach(b => b.classList.toggle('active', b === btn));
+
+        if (workoutMode === 'gym') {
+          fetchExercisesForTheme();
+        }
+      });
+    });
+  }
 
   function setupWorkoutUI() {
     const panel = qs('#workout');
@@ -418,8 +868,10 @@
     initLockButton();
   }
 
-    document.addEventListener('DOMContentLoaded', async () => {
+  document.addEventListener('DOMContentLoaded', async () => {
     await fetchLoadLevel();
+    setupModeToggle();
+    setupThemeToggle();
     setupWorkoutUI();
   });
 })();

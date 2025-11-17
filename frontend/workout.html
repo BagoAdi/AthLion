@@ -48,43 +48,77 @@
 
       <div class="panel-inner">
         <section class="card glass workout-builder">
-          <div class="builder-header">
-            <h3>Gyakorlatválasztó</h3>
-            <p class="muted">
-              Válaszd ki a napot a naptárban, majd húzd be először a
-              <strong>3 fő gyakorlatot</strong>. Ezek alapján ajánlunk még
-              <strong>+3 kiegészítőt</strong>, végül zárd le a napot.
+          <!-- 1) MÓDVÁLASZTÓ -->
+          <div class="builder-mode">
+            <h3>Mit edzettél ma?</h3>
+            <p class="muted small">
+              Először válaszd ki, hogy kardióztál vagy edzőteremben edzettél.
             </p>
+            <div class="mode-buttons">
+              <button id="modeCardio" class="btn mode-btn">Kardió</button>
+              <button id="modeGym" class="btn mode-btn">Edzőtermi edzés</button>
+            </div>
+            <p class="muted small" id="dayTypeLabel" style="margin-top:8px;"></p>
           </div>
 
-          <div class="builder-section">
-            <h4>Elérhető gyakorlatok</h4>
-            <div class="exercise-pool" id="exercisePool"></div>
-          </div>
+          <!-- 2) EDZŐTERMI BUILDER (GYM) -->
+          <div id="gymBuilder" class="builder-body" style="display:none;">
+            <div class="builder-header">
+              <h3>Gyakorlatválasztó</h3>
+              <p class="muted">
+                Válaszd ki a napot a naptárban, majd húzd be először a
+                <strong>3 fő gyakorlatot</strong>. Ezek alapján ajánlunk még
+                <strong>+3 kiegészítőt</strong>, végül zárd le a napot.
+              </p>
+            </div>
 
-          <div class="builder-section">
-            <h4>Fő edzések (max. 3)</h4>
-            <div class="dropzone" id="mainExercises">
-              <span class="dropzone-placeholder">
-                Húzd ide a fő gyakorlatokat
-              </span>
+            <div class="builder-section">
+              <h4>Elérhető gyakorlatok</h4>
+              <div class="exercise-pool" id="exercisePool"></div>
+            </div>
+
+            <div class="builder-section">
+              <h4>Fő edzések (max. 3)</h4>
+              <div class="dropzone" id="mainExercises">
+                <span class="dropzone-placeholder">
+                  Húzd ide a fő gyakorlatokat
+                </span>
+              </div>
+            </div>
+
+            <div class="builder-section">
+              <h4>Kiegészítő ajánlott edzések (max. 3)</h4>
+              <div class="dropzone" id="extraExercises">
+                <span class="dropzone-placeholder">
+                  Ha megvan a 3 fő gyakorlat, automatikusan ajánlunk +3-at ide.
+                </span>
+              </div>
             </div>
           </div>
 
-          <div class="builder-section">
-            <h4>Kiegészítő ajánlott edzések (max. 3)</h4>
-            <div class="dropzone" id="extraExercises">
-              <span class="dropzone-placeholder">
-                Ha megvan a 3 fő gyakorlat, automatikusan ajánlunk +3-at ide.
-              </span>
+          <!-- 3) KARDIÓ BUILDER -->
+          <div id="cardioBuilder" class="builder-body" style="display:none;">
+            <div class="builder-header">
+              <h3>Kardió aktivitás</h3>
+              <p class="muted">
+                Válaszd ki, milyen kardiót végeztél a mai napon.
+              </p>
+            </div>
+            <div class="builder-section">
+              <h4>Elérhető kardió tevékenységek</h4>
+              <div class="cardio-list" id="cardioList">
+                <p class="muted small">Válassz ki egy kardió aktivitást a listából.</p>
+              </div>
             </div>
           </div>
 
+          <!-- 4) KÖZÖS LOCK GOMB -->
           <button class="btn" id="lockDayBtn" disabled>Nap lezárása</button>
           <p class="muted small" id="lockInfo">
             Válassz ki legalább 3 gyakorlatot a nap lezárásához.
           </p>
         </section>
+
 
         <section class="card glass plan calendar-card">
           <h3>Naptár</h3>

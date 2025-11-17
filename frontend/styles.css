@@ -159,6 +159,75 @@
     }
 
 /* --- WORKOUT BUILDER + CALENDAR – GLASS OVERRIDES --- */
+
+/* --- MÓDVÁLASZTÓ --- */
+.builder-mode {
+  margin-bottom: 12px;
+}
+
+.mode-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.mode-btn {
+  flex: 1 1 140px;
+}
+
+.mode-btn.active {
+  box-shadow: 0 0 0 1px rgba(62,142,222,0.7), 0 10px 26px rgba(0,0,0,0.7);
+  transform: translateY(-1px);
+}
+
+/* --- KARDIÓ LISTA --- */
+.cardio-list {
+  margin-top: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  border-radius: 18px;
+  padding: 8px;
+  background: radial-gradient(circle at 0 0, rgba(110,203,108,0.16), rgba(7,10,15,0.9));
+  border: 1px solid rgba(110,203,108,0.4);
+}
+
+.cardio-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 13px;
+  margin-bottom: 6px;
+  transition: background 0.16s var(--transition), transform 0.16s var(--transition);
+}
+
+.cardio-item:hover {
+  background: rgba(255,255,255,0.06);
+  transform: translateY(-1px);
+}
+
+.cardio-item.selected {
+  background: linear-gradient(135deg, rgba(110,203,108,0.3), rgba(62,142,222,0.3));
+}
+
+/* --- NAPTÁR COLOR CODING MÓDOKRA --- */
+
+.calendar-day.gym-day:not(.empty) {
+  border-color: rgba(62,142,222,0.8);
+}
+
+.calendar-day.cardio-day:not(.empty) {
+  border-color: rgba(110,203,108,0.9);
+}
+
+.calendar-day.cardio-day .calendar-datenum {
+  background: radial-gradient(circle at 30% 0, rgba(255,255,255,0.8), rgba(110,203,108,0.9));
+}
+
+
 .workout-builder {
   padding: 20px 22px;
   display: flex;

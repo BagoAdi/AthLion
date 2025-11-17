@@ -20,3 +20,6 @@ from .training_profile import TrainingProfile
 # --- 4. Új "Gyerek" modell (Ennek kell a VÉGÉN lennie) ---
 # Ez tölti be a FoodItem-et ÉS a kapcsolótáblákat.
 from .food_item import FoodItem, FoodDietTypeLink, food_allergen_link
+
+from .physical_activity import PhysicalActivity
+from .excercise import Exercise

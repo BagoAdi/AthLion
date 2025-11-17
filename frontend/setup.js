@@ -59,6 +59,12 @@ form.addEventListener("submit", async (e) => {
         msg.style.color = "var(--ok)";
         msg.textContent = "✅ Beállítások elmentve! Átirányítás a főoldalra...";
         
+        try {
+            localStorage.setItem("athlion_load_level", load_level);
+        } catch (e) {
+            console.warn("Nem sikerült elmenteni a load_levelt localStorage-be:", e);
+        }
+
         // Várunk picit, hogy a felhasználó lássa az üzenetet, majd átirányítjuk
         setTimeout(() => {
             window.location.href = "index.html";

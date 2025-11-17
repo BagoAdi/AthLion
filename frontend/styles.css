@@ -68,7 +68,7 @@
     .brand .title span{color:var(--gold-1)}
 
     /* A .nav-ra már nincs szükség a fő layout-hoz */
-    .nav { }
+
 
     /* --- ÚJ SZABÁLY --- */
     /* A középső linkek csoportja */
@@ -622,10 +622,43 @@
   min-height: 12px;
 }
 
-.calendar-day.filled .calendar-summary {
+.calendar-summary {
   color: var(--gold-2);
   font-weight: 600;
 }
+
+.calendar-day.filled {
+  border-color: var(--gold-2);
+  box-shadow:
+    0 0 0 1px rgba(110,203,108,0.55),
+    0 14px 34px rgba(0,0,0,0.85);
+}
+
+.calendar-day.train-day::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 6px;
+  bottom: 8px;
+  width: 4px;
+  border-radius: 999px;
+  background: linear-gradient(to bottom, var(--gold-1), var(--gold-2));
+  opacity: 0.9;
+}
+
+/* Pihenőnap – halványabb csík */
+.calendar-day.rest-day::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 10px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.10);
+  opacity: 0.7;
+}
+
 
 @media (max-width: 1000px) {
   .calendar-card {
@@ -966,6 +999,33 @@
   background: rgba(255,255,255,0.08);
   text-decoration: none;
 }
+
+/* Edzésnap - bal oldali kiemelés */
+.calendar-day.train-day::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 6px;
+  bottom: 8px;
+  width: 4px;
+  border-radius: 999px;
+  background: linear-gradient(to bottom, var(--gold-1), var(--gold-2));
+  opacity: 0.9;
+}
+
+/* Pihenőnap */
+.calendar-day.rest-day::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 10px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.10);
+  opacity: 0.7;
+}
+
 
 
 

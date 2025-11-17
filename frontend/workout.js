@@ -21,6 +21,32 @@
     { id: 'cardio', name: 'Kardió gép (futópad / ellipszis)', tag: 'Kardió' }
   ];
 
+  const TRAINING_SCHEDULES = {
+    'Könnyű':  [1, 4],              // H, Cs
+    'Közepes': [1, 3, 5],           // H, Sze, P
+    'Nehéz':   [1, 2, 4, 5, 6]      // H, K, Cs, P, Szo
+  };
+
+  let loadLevel = null;
+
+  async function fetchLoadLevel() {
+    try {
+      const res = await fetch("/api/v1/users/me", {
+        credentials: "include"
+      });
+      if (!res.ok) throw new Error("Hiba a load level lekérésénél");
+
+      const data = await res.json();
+      loadLevel = data.training_profile?.load_level || "Közepes";
+
+    } catch (err) {
+      console.error(err);
+      loadLevel = "Közepes"; // fallback
+    }
+  }
+
+
+
   // builder state
   let mainExercises = [];    // 3 fő
   let extraExercises = [];   // max +3
@@ -224,7 +250,7 @@
     const m = calendarMonth.getMonth();
     const firstOfMonth = new Date(y, m, 1);
     const daysInMonth = new Date(y, m + 1, 0).getDate();
-
+    const trainingDays = TRAINING_SCHEDULES[loadLevel] || [];
     // hétfő-első offset (0 = hétfő, 6 = vasárnap)
     const jsDay = firstOfMonth.getDay();      // 0 = vasárnap
     const offset = (jsDay + 6) % 7;           // 0 = hétfő
@@ -255,6 +281,16 @@
       const isToday = key === dateKey(today);
 
       cell.className = 'calendar-day';
+
+      const wd = d.getDay();  // 0=V,1=H,2=K...
+      const schedule = TRAINING_SCHEDULES[loadLevel] || [];
+
+      if (schedule.includes(wd)) {
+          cell.classList.add('train-day');
+      } else {
+          cell.classList.add('rest-day');
+      }
+
       if (isSelected) cell.classList.add('active');
       if (dayData) cell.classList.add('filled');
       if (isToday) cell.classList.add('today');
@@ -382,5 +418,8 @@
     initLockButton();
   }
 
-  document.addEventListener('DOMContentLoaded', setupWorkoutUI);
+    document.addEventListener('DOMContentLoaded', async () => {
+    await fetchLoadLevel();
+    setupWorkoutUI();
+  });
 })();

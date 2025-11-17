@@ -2,7 +2,6 @@
 from pydantic import BaseModel
 from typing import Optional
 
-
 class PhysicalActivityOut(BaseModel):
     id: int
     name: str          # a DB-ben: specific_activities

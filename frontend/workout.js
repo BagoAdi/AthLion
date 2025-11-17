@@ -88,39 +88,58 @@
 
   // ---------- GYAKORLATLISTA ----------
 
-    async function loadGymExercises() {
+  async function loadGymExercises() {
     try {
-      const res = await fetch("/api/v1/exercises", {
+      const res = await fetch("/api/v1/exercises/", {
         credentials: "include"
       });
       if (!res.ok) throw new Error("Hiba az edzésgyakorlatok lekérésénél");
-      EXERCISES = await res.json();
+      const data = await res.json();
+      // Backend: {id, name, level, force, primary_muscles, ...}
+      EXERCISES = data.map(ex => ({
+        id: ex.id.toString(),
+        name: ex.name,
+        level: ex.level || null,
+        force: ex.force || null,
+        // "quadriceps, hamstrings" -> ["quadriceps","hamstrings"]
+        primaryMuscles: (ex.primary_muscles || "")
+          .split(",")
+          .map(s => s.trim())
+          .filter(Boolean),
+        category: ex.category || ""
+      }));
+      renderExercisePool();
     } catch (err) {
       console.error(err);
       EXERCISES = [];
+      renderExercisePool();
     }
   }
 
   async function loadCardioActivities() {
     try {
-      const res = await fetch("/api/v1/physical_activities", {
+      const res = await fetch("/api/v1/physical_activities/?limit=150", {
         credentials: "include"
       });
       if (!res.ok) throw new Error("Hiba a kardió aktivitások lekérésénél");
       const data = await res.json();
 
-      // pl. szűrés, hogy lawn/gardening ne legyen
+      // Szűrés: ne legyenek kertészkedés / házimunka jellegű aktivitások
       cardioActivities = data.filter(a => {
-        const name = (a.name || a.specific_activity || "").toLowerCase();
-        return !name.includes("lawn") && !name.includes("gardening");
+        const name = (a.name || "").toLowerCase();
+        return !name.includes("lawn")
+            && !name.includes("garden")
+            && !name.includes("household");
       });
+      renderCardioList();
     } catch (err) {
       console.error(err);
       cardioActivities = [];
+      renderCardioList();
     }
   }
 
-    async function fetchExercisesForTheme() {
+  async function fetchExercisesForTheme() {
     // loadLevel a usertől jön: beginner / intermediate / expert-re konvertálunk
     let level = "all";
     if (loadLevel) {
@@ -139,7 +158,7 @@
     });
 
     try {
-      const res = await fetch(`/api/v1/exercises?${params.toString()}`, {
+      const res = await fetch(`/api/v1/exercises/?${params.toString()}`, {
         credentials: "include"
       });
       if (!res.ok) throw new Error("Hiba a gyakorlatok lekérésénél");
@@ -165,7 +184,7 @@
     if (!select) return;
 
     try {
-      const res = await fetch('/api/v1/physical_activities?limit=150', {
+      const res = await fetch('/api/v1/physical_activities/?limit=150', {
         credentials: "include"
       });
       if (!res.ok) throw new Error("Hiba a kardió aktivitások lekérésénél");
@@ -203,8 +222,6 @@
     }
   }
 
-
-
   function renderExercisePool() {
     if (workoutMode !== 'gym') return;
     const pool = qs('#exercisePool');
@@ -239,7 +256,6 @@
       pool.appendChild(pill);
     });
   }
-
 
   function determineDayTypeForNewGymDay() {
     // csak a gym napok számítanak
@@ -300,7 +316,7 @@
     return '';
   }
 
-  //ui váltás
+  // UI váltás
   function setWorkoutMode(mode) {
     if (dayLocked && selectedDateKey && calendarData[selectedDateKey]) {
       // lezárt napnál ne lehessen módot váltani
@@ -373,7 +389,7 @@
     }
   }
 
-  //kardió lista render
+  // kardió lista render
   function renderCardioList() {
     const container = qs('#cardioList');
     if (!container) return;
@@ -393,8 +409,8 @@
       div.className = 'cardio-item';
 
       div.innerHTML = `
-        <span>${act.name || act.specific_activity}</span>
-        <span class="muted small">${act.mets ? act.mets + ' MET' : ''}</span>
+        <span>${act.name}</span>
+        <span class="muted small">${act.met ? act.met + ' MET' : ''}</span>
       `;
 
       div.addEventListener('click', () => {
@@ -408,11 +424,10 @@
     });
   }
 
-
   // ---------- DROPZÓNÁK ----------
 
   function renderDropzones() {
-      if (workoutMode !== 'gym') {
+    if (workoutMode !== 'gym') {
       // gym UI rejtve
       return;
     }
@@ -590,9 +605,9 @@
       const schedule = TRAINING_SCHEDULES[loadLevel] || [];
 
       if (schedule.includes(wd)) {
-          cell.classList.add('train-day');
+        cell.classList.add('train-day');
       } else {
-          cell.classList.add('rest-day');
+        cell.classList.add('rest-day');
       }
 
       if (isSelected) cell.classList.add('active');
@@ -870,7 +885,7 @@
 
   document.addEventListener('DOMContentLoaded', async () => {
     await fetchLoadLevel();
-    setupModeToggle();
+    setupModeSelector();   // <-- EZ köt rá a Kardió / Edzőterem gombokra
     setupThemeToggle();
     setupWorkoutUI();
   });

@@ -2,7 +2,6 @@
 from pydantic import BaseModel
 from typing import Optional
 
-
 class ExerciseOut(BaseModel):
     id: int
     name: str              # name_hu vagy fallback name_en

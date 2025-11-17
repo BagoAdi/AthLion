@@ -1,15 +1,15 @@
 # app/api/v1/routes/exercises.py
-from typing import List, Optional
+from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.db.session import SessionLocal
-from app.models.excercise import Exercise   # nálad ez a fájlnév
+from app.models.excercise import Exercise   # NÁLAD ÍGY HÍVJÁK A FÁJLT
 from app.api.v1.schemas.exercise import ExerciseOut
 
 router = APIRouter(
-    prefix="/api/v1/exercises",
+    prefix="/exercises",
     tags=["exercises"],
 )
 
@@ -20,15 +20,14 @@ def get_db():
     finally:
         db.close()
 
-# egyszerű helper: magyar név, ha van, különben angol
+# magyar név, ha van, különben angol
 def _display_name(ex: Exercise) -> str:
     return ex.name_hu or ex.name_en
-
 
 def _is_leg_exercise(ex: Exercise) -> bool:
     """
     LEG DAY szűrés – láb fő izomcsoportok alapján.
-    A primary_muscles egy sima string nálad (pl. 'quadriceps, hamstrings').
+    A primary_muscles nálad sima string (pl. 'quadriceps, hamstrings').
     """
     if not ex.primary_muscles:
         return False
@@ -63,18 +62,16 @@ def list_exercises(
 
     q = db.query(Exercise)
 
-    # nehézségi szint
+    # nehézség
     if level != "all":
         q = q.filter(Exercise.level == level)
 
-    # push / pull / leg day
+    # push / pull / legs
     if theme == "push":
         q = q.filter(Exercise.force == "push")
     elif theme == "pull":
         q = q.filter(Exercise.force == "pull")
     elif theme == "legs":
-        # legs-nél kicsit trükközünk: először összeset lekérjük, aztán Pythonban szűrünk
-        # (SQL string like-kel is lehetne, de így egyszerűbb most)
         exercises = q.all()
         filtered = [ex for ex in exercises if _is_leg_exercise(ex)]
         return [
@@ -91,7 +88,6 @@ def list_exercises(
             for ex in filtered[:limit]
         ]
 
-    # ha nem legs
     exercises = q.limit(limit).all()
 
     return [

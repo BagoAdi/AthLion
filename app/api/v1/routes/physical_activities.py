@@ -9,7 +9,7 @@ from app.models.physical_activity import PhysicalActivity
 from app.api.v1.schemas.physical_activity import PhysicalActivityOut
 
 router = APIRouter(
-    prefix="/api/v1/physical_activities",
+    prefix="/physical_activities",
     tags=["physical_activities"],
 )
 
@@ -24,7 +24,6 @@ def get_db():
 def _exclude_non_sporty(q):
     """
     Itt szűrjük ki az olyan sorokat, mint 'lawn and garden', 'household', stb.
-    Ha a compendium máshogy fogalmaz, ide nyugodtan felvehetsz még kulcsszavakat.
     """
     patterns = ["lawn", "garden", "gardening", "household", "snow shoveling"]
     for p in patterns:

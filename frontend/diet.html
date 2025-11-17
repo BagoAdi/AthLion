@@ -30,62 +30,112 @@
     <div class="nav-auth-group">
         <a href="profile.html" class="ghost" id="navProfile">Profil</a>
         <button class="lang" id="langToggle">HU/EN</button> 
-        
         <span class="welcome" id="welcomeText" style="display:none"></span>
-        
         <a href="register.html" class="ghost" id="navRegister">Regisztráció</a>
         <a href="login.html" class="ghost" id="navSignin">Bejelentkezés</a>
-
         <button class="ghost" id="navLogout" style="display:none">Kijelentkezés</button>
     </div>
   </header>
+  
   <main class="page">
     <section class="panel" id="diet">
       <div class="card glass hero">
         <h1 id="dietTitle">Étrend kezelő</h1>
       </div>
 
-      <div class="panel-inner">
-        <section class="card glass form">
-          <h3 id="macroTitle">Makró célok</h3>
-          <label for="cal" id="calLabel">Napi kalória</label>
-          <div id="cal" class="macro-display"></div>
-
-          <div class="macro-grid">
-            <div>
-              <label for="p">Fehérje (g)</label>
-              <div id="p" class="macro-display-small"></div>
-            </div>
-            <div>
-              <label for="c">Szénhidrát (g)</label>
-              <div id="c" class="macro-display-small"></div>
-            </div>
-            <div>
-              <label for="f">Zsír (g)</label>
-              <div id="f" class="macro-display-small"></div>
-            </div>
+      <div class="panel-inner" id="diet-panel-top">
+        
+        <section class="card glass" id="dayNavigatorCard">
+          <h3 style="margin-top:0; text-align: center;">Nap</h3>
+          <div class="day-nav-control">
+            <button class="ghost ghost-icon" id="dayPrev" title="Előző nap">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" style="width: 20px; height: 20px;"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+            </button>
+            <div class="day-nav-label" id="dayLabel">Mai nap</div>
+            <button class="ghost ghost-icon" id="dayNext" title="Következő nap">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" style="width: 20px; height: 20px;"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
+            </button>
           </div>
-
-          
-          <p id="macroMsg"></p>
-
-          <h3 id="foodSearchTitle" style="margin-top:16px">Étel kereső</h3>
-          <div class="search-row">
-            <input id="foodQuery" type="text" placeholder="pl. csirkemell, zab..." />
-            <button class="ghost" id="foodSearch">Keres</button>
-          </div>
-          <div class="results" id="foodResults"></div>
+          <button class="ghost" id="dayToday" style="width: 100%; margin-top: 10px;">Ugrás a mai napra</button>
         </section>
 
-        <section class="card glass meal-list">
-          <h3 id="weeklyDietTitle">Heti étrend</h3>
-          <div class="tabs" id="dietTabs"></div>
-          <div id="dietDayList"></div>
+        <section class="card glass" id="macroChartCard">
+            <h3 id="macroTitle" style="text-align:center; margin-top:0;">Makró célok</h3>
+            
+            <div class="main-calorie-tracker">
+              <div class="calorie-circle-static" id="calorieCircle">
+                <span id="remainingKcalValue">0</span>
+                <span class="label">HÁTRALÉVŐ KCAL</span>
+              </div>
+            </div>
+
+            <div class="macro-circles">
+              <div class="macro-circle-item">
+                <div class="macro-circle-progress" id="proteinCircle" style="--progress-percent: 100%; --macro-color: var(--gold-1);">
+                  <span id="proteinValue">0</span>
+                  <span class="unit">g</span>
+                </div>
+                <span class="macro-label">Fehérje</span>
+              </div>
+
+              <div class="macro-circle-item">
+                <div class="macro-circle-progress" id="carbsCircle" style="--progress-percent: 100%; --macro-color: var(--gold-2);">
+                  <span id="carbsValue">0</span>
+                  <span class="unit">g</span>
+                </div>
+                <span class="macro-label">Szénhidrát</span>
+              </div>
+
+              <div class="macro-circle-item">
+                <div class="macro-circle-progress" id="fatCircle" style="--progress-percent: 100%; --macro-color: #d1a10d;">
+                  <span id="fatValue">0</span>
+                  <span class="unit">g</span>
+                </div>
+                <span class="macro-label">Zsír</span>
+              </div>
+            </div>
+            
+            <p id="macroMsg" style="text-align:center; min-height: 1.2em;"></p>
+        </section>
+        <section class="card glass" id="mealSelectorCard">
+          <h3 style="margin-top:0; text-align: center;">Étkezés hozzáadása</h3>
+          <div class="meal-tabs" id="mealTabs">
+            <button class="meal-tab" data-meal="breakfast">Reggeli</button>
+            <button class="meal-tab" data-meal="lunch">Ebéd</button>
+            <button class="meal-tab" data-meal="dinner">Vacsora</button>
+            <button class="meal-tab" data-meal="snacks">Nasi</button>
+          </div>
+        </section>
+      </div>
+
+      <div class="panel-inner" id="diet-panel-bottom">
+        <section class="card glass" id="dailyFoodListCard">
+          <h3 style="margin-top:0;">Mai fogyasztás</h3>
+          <div class="daily-food-list" id="dailyFoodList">
+            <p class="muted" id="emptyListMsg">Még nem adtál hozzá ételt a mai naphoz.</p>
+          </div>
         </section>
       </div>
     </section>
   </main>
 
+  <div class="modal-overlay" id="foodSearchModal" style="display: none;">
+    <div class="modal-content card glass">
+      <button class="modal-close-btn" id="modalCloseBtn" title="Bezárás">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width: 24px; height: 24px;"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
+
+      <h3 id="modalTitle">Étel keresése</h3>
+      <div class="search-row">
+        <input id="modalFoodQuery" type="text" placeholder="pl. csirkemell, zab..." />
+      </div>
+      <div class="results" id="modalFoodResults">
+        <p class="muted" style="padding: 10px 0;">Írj be legalább 3 karaktert a kereséshez.</p>
+      </div>
+    </div>
+  </div>
+
   <script src="script.js"></script>
+  <script src="diet.js"></script>
 </body>
 </html>

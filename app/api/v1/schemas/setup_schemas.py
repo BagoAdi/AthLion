@@ -1,6 +1,6 @@
 # app/api/v1/schemas/setup_schemas.py
 from pydantic import BaseModel
-from typing import Optional
+from typing import List, Optional
 
 class SetupIn(BaseModel):
     start_weight_kg: float
@@ -9,6 +9,10 @@ class SetupIn(BaseModel):
     load_level: str       # pl. "Közepes"
     program_time: str     # pl. "30-45 perc"
     preference: str       # pl. "Vegyes"
+    allergy_ids: List[int] = []
+    injury_ids: List[int] = []
+    condition_ids: List[int] = []
+    medication_ids: List[int] = []
 
 class SetupOut(BaseModel):
     status: str

@@ -12,7 +12,7 @@ from app.api.v1.routes import setup as setup_routes
 from app.api.v1.routes import food as food_routes
 from app.api.v1.routes import exercises as excercises_routes
 from app.api.v1.routes import physical_activities as physical_activities_routes
-
+from app.api.v1.routes import options as options_routes
 
 
 app = FastAPI()
@@ -34,6 +34,7 @@ app.include_router(setup_routes.router, prefix="/api/v1")
 app.include_router(food_routes.router, prefix="/api/v1")
 app.include_router(excercises_routes.router, prefix="/api/v1")
 app.include_router(physical_activities_routes.router, prefix="/api/v1")
+app.include_router(options_routes.router, prefix="/api/v1")
 
 # 2) Frontend (statikus) mount
 # A projekt gyökeréből nézve a 'frontend' mappát szolgáljuk ki.

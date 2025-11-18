@@ -20,8 +20,66 @@ form.addEventListener("submit", async (e) => {
     const load_level = document.getElementById("load_level").value;
     const program_time = document.getElementById("program_time").value;
     const preference = document.getElementById("preference").value;
+    const allergyContainer = document.getElementById("allergy_container");
+    const injuryContainer = document.getElementById("injury_container");
+    const conditionContainer = document.getElementById("condition_container");
 
-    if (!start_weight_kg || !target_weight_kg || !goal_type || !load_level) {
+    // Segédfüggvény checkboxok generálásához
+function renderCheckboxes(container, items, namePrefix) {
+    container.innerHTML = "";
+    if (items.length === 0) {
+        container.innerHTML = '<p class="small muted">Nincs adat.</p>';
+        return;
+    }
+    items.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "checkbox-item";
+        div.innerHTML = `
+            <input type="checkbox" id="${namePrefix}_${item.id}" value="${item.id}" data-group="${namePrefix}">
+            <label for="${namePrefix}_${item.id}">${item.name}</label>
+        `;
+        container.appendChild(div);
+    });
+}
+// Betöltés induláskor
+document.addEventListener("DOMContentLoaded", async () => {
+    if (!token) return; // Már van redirect
+
+    try {
+        // Opciók párhuzamos lekérése
+        const [resAlg, resInj, resCond] = await Promise.all([
+            fetch("/api/v1/options/allergens"),
+            fetch("/api/v1/options/injuries"),
+            fetch("/api/v1/options/conditions")
+        ]);
+
+        const allergens = await resAlg.json();
+        const injuries = await resInj.json();
+        const conditions = await resCond.json();
+
+        renderCheckboxes(allergyContainer, allergens, "alg");
+        renderCheckboxes(injuryContainer, injuries, "inj");
+        renderCheckboxes(conditionContainer, conditions, "cond");
+
+    } catch (err) {
+        console.error("Nem sikerült betölteni az opciókat", err);
+    }
+});
+
+
+form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    // ... (meglévő validáció) ...
+
+    // Új: Checkboxok összegyűjtése
+    const allergyIds = Array.from(document.querySelectorAll('input[data-group="alg"]:checked')).map(cb => parseInt(cb.value));
+    const injuryIds = Array.from(document.querySelectorAll('input[data-group="inj"]:checked')).map(cb => parseInt(cb.value));
+    const conditionIds = Array.from(document.querySelectorAll('input[data-group="cond"]:checked')).map(cb => parseInt(cb.value));
+
+    // ... (fetch hívás változatlan, mert a payload bővült) ...
+});
+
+    if (!start_weight_kg || !target_weight_kg || !goal_type || !load_level || !program_time || !preference) {
         msg.style.color = "var(--err)";
         msg.textContent = "❌ Minden mező kitöltése kötelező.";
         return;
@@ -33,7 +91,11 @@ form.addEventListener("submit", async (e) => {
         goal_type,
         load_level,
         program_time,
-        preference
+        preference,
+        allergy_ids: allergyIds,
+        injury_ids: injuryIds,
+        condition_ids: conditionIds,
+        medication_ids: [] // Ezt most kihagytuk, de hasonlóan működne
     };
 
     try {
@@ -75,3 +137,6 @@ form.addEventListener("submit", async (e) => {
         msg.textContent = "❌ " + err.message;
     }
 });
+
+
+

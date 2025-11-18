@@ -169,6 +169,28 @@
 .modal-content .result { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed #222; font-size: 14px; }
 .modal-content .result button { border: none; border-radius: 10px; padding: 6px 10px; font-weight: 700; background: linear-gradient(135deg, var(--gold-1), var(--gold-2)); color: #161616; cursor: pointer; margin-right: 8px; }
 
+.checkbox-group {
+    max-height: 120px;
+    overflow-y: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: rgba(0,0,0,0.2); /* Sötétebb háttér */
+}
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+}
+.checkbox-item input {
+    width: auto; /* Reset global input width */
+    accent-color: var(--gold-1);
+}
+
+
 /* Responsivity overrides */
 @media (max-width: 1000px) {
   .panel-inner { grid-template-columns: 1fr; }

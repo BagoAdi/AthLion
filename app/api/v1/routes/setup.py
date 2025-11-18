@@ -10,6 +10,10 @@ from app.models.training_profile import TrainingProfile
 from app.api.v1.routes.auth import get_current_active_user, get_db
  
 from app.api.v1.schemas.setup_schemas import SetupIn, SetupOut, ProfileOut, ProfileUpdate
+from app.models.user_allergy import UserAllergy
+from app.models.user_condition import UserCondition
+from app.models.user_injury import UserInjury
+from app.models.user_medication import UserMedication
 
 router = APIRouter(prefix="/setup", tags=["setup"])
 
@@ -60,6 +64,24 @@ def create_initial_setup(
             is_active=1
         )
         db.add(new_diet_profile)
+
+        # --- ÚJ RÉSZ: Egészségügyi adatok mentése ---
+        
+        # 1. Allergiák
+        for alg_id in payload.allergy_ids:
+            db.add(UserAllergy(user_id=current_user.user_id, allergen_id=alg_id, severity=1)) # Default severity
+
+        # 2. Sérülések
+        for inj_id in payload.injury_ids:
+            db.add(UserInjury(user_id=current_user.user_id, injury_id=inj_id, status="active"))
+
+        # 3. Egészségügyi állapotok
+        for cond_id in payload.condition_ids:
+            db.add(UserCondition(user_id=current_user.user_id, condition_id=cond_id))
+
+        # 4. Gyógyszerek
+        for med_id in payload.medication_ids:
+            db.add(UserMedication(user_id=current_user.user_id, medication_id=med_id))
 
         # 5. Mentés
         db.commit()

@@ -25,6 +25,9 @@ class ProfileOut(BaseModel):
     target_weight_kg: float
     goal_type: str
     load_level: str
+    allergy_ids: List[int] = []
+    injury_ids: List[int] = []
+    condition_ids: List[int] = []
 
     class Config:
         from_attributes = True
@@ -37,4 +40,7 @@ class ProfileUpdate(BaseModel):
     goal_type: Optional[str] = None
     target_weight_kg: Optional[float] = None
     load_level: Optional[str] = None
-
+    allergy_ids: Optional[List[int]] = None
+    injury_ids: Optional[List[int]] = None
+    condition_ids: Optional[List[int]] = None
+    medication_ids: Optional[List[int]] = None

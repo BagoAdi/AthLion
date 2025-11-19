@@ -118,12 +118,23 @@ def get_active_profile(
     if not start_state:
         raise HTTPException(status_code=404, detail="Active StartState not found.")
 
+    # Listák kinyerése a current_user relációkból
+    # Feltételezzük, hogy a User modellben be vannak kötve a relációk (allergies, injuries, conditions)
+    allergy_ids = [a.allergen_id for a in current_user.allergies]
+    injury_ids = [i.injury_id for i in current_user.injuries]
+    condition_ids = [c.condition_id for c in current_user.conditions]
+    medication_ids = [m.medication_id for m in current_user.medications]
+
     # 3. Építsük össze a válasz sémát
     return ProfileOut(
         start_weight_kg=start_state.start_weight_kg,
         target_weight_kg=start_state.target_weight_kg,
         goal_type=start_state.goal_type,
-        load_level=active_training_profile.load_level
+        load_level=active_training_profile.load_level,
+        allergy_ids=allergy_ids,
+        injury_ids=injury_ids,
+        condition_ids=condition_ids,
+        medication_ids=medication_ids
     )
 
 @router.put("/active", response_model=SetupOut)
@@ -161,21 +172,48 @@ def update_active_profile(
         if "target_weight_kg" in update_data:
             start_state.target_weight_kg = update_data["target_weight_kg"]
         
-        # --- INNENTŐL ADD HOZZÁ ---
         if "start_weight_kg" in update_data:
             start_state.start_weight_kg = update_data["start_weight_kg"]
 
         if "goal_type" in update_data:
             start_state.goal_type = update_data["goal_type"]
-        # --- EDDIG ---
             
-        db.add(start_state) # Elég egyszer hozzáadni
+        db.add(start_state)
             
         # Ez a TrainingProfile táblát frissíti
         if "load_level" in update_data:
             active_training_profile.load_level = update_data["load_level"]
             db.add(active_training_profile)
 
+        # --- ÚJ RÉSZ: Egészségügyi adatok frissítése ---
+
+        # Allergiák
+        if "allergy_ids" in update_data:
+            # Régi törlése
+            db.query(UserAllergy).filter(UserAllergy.user_id == current_user.user_id).delete()
+            # Újak hozzáadása
+            for aid in update_data["allergy_ids"]:
+                db.add(UserAllergy(user_id=current_user.user_id, allergen_id=aid, severity=1))
+
+        # Sérülések
+        if "injury_ids" in update_data:
+            db.query(UserInjury).filter(UserInjury.user_id == current_user.user_id).delete()
+            for iid in update_data["injury_ids"]:
+                db.add(UserInjury(user_id=current_user.user_id, injury_id=iid, status="active"))
+
+        # Állapotok
+        if "condition_ids" in update_data:
+            db.query(UserCondition).filter(UserCondition.user_id == current_user.user_id).delete()
+            for cid in update_data["condition_ids"]:
+                db.add(UserCondition(user_id=current_user.user_id, condition_id=cid))
+
+        # Gyógyszerek
+        if "medication_ids" in update_data:
+            db.query(UserMedication).filter(UserMedication.user_id == current_user.user_id).delete()
+            for mid in update_data["medication_ids"]:
+                db.add(UserMedication(user_id=current_user.user_id, medication_id=mid))
+
+    
         db.commit()
         return SetupOut(status="success")
         

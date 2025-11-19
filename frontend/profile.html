@@ -52,7 +52,37 @@
         <option value="Nehéz">Nehéz (Fizikai munka, heti 5+ edzés)</option>
       </select>
       
-      <button class="btn" type="submit" style="margin-top:18px">Beállítások Mentése</button>
+      <hr style="border:none;border-top:1px solid var(--border);margin: 24px 0;">
+      <h3 style="font-size:16px; margin-bottom:14px;">Egészségügyi adatok</h3>
+
+      <label style="font-size:13px; color:var(--muted); margin-bottom:6px; display:block;">Ételallergiák</label>
+      <div class="multiselect" id="ms-allergy">
+        <div class="multiselect-header">
+          <span class="ms-placeholder">Válassz...</span>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="multiselect-list" id="allergyContainer"></div>
+      </div>
+
+      <label style="font-size:13px; color:var(--muted); margin-bottom:6px; display:block;">Sérülések</label>
+      <div class="multiselect" id="ms-injury">
+        <div class="multiselect-header">
+          <span class="ms-placeholder">Válassz...</span>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="multiselect-list" id="injuryContainer"></div>
+      </div>
+
+      <label style="font-size:13px; color:var(--muted); margin-bottom:6px; display:block;">Egészségügyi állapotok</label>
+      <div class="multiselect" id="ms-condition">
+        <div class="multiselect-header">
+          <span class="ms-placeholder">Válassz...</span>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="multiselect-list" id="conditionContainer"></div>
+      </div>
+
+      <button class="btn" type="submit" style="margin-top:24px">Beállítások Mentése</button>
       <p id="msg" style="margin-top:10px;font-size:13px;color:var(--muted);text-align:center"></p>
 
     </form>

@@ -50,6 +50,13 @@ class FoodItem(Base):
         back_populates="food_items"
     )
 
+    # ÚJ: Kapcsolat a UserFoodLog-hoz
+    user_logs = relationship(
+        "UserFoodLog", 
+        back_populates="food_item", 
+        cascade="all, delete-orphan"
+    )
+
     # Helper property (opcionális, de hasznos)
     @property
     def diet_types(self):

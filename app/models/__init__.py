@@ -23,3 +23,5 @@ from .food_item import FoodItem, FoodDietTypeLink, food_allergen_link
 
 from .physical_activity import PhysicalActivity
 from .excercise import Exercise
+
+from .user_food_log import UserFoodLog

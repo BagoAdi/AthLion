@@ -3,14 +3,17 @@
 // =================================================
 
 // --- ÁLLAPOT (State) ---
+const token = localStorage.getItem("token"); // Token a hitelesítéshez
 let selectedDate = new Date(); // A naptárban kiválasztott nap
+let selectedDateKey = dateToISO(selectedDate); // YYYY-MM-DD
 let activeMealType = 'breakfast'; // 'breakfast', 'lunch', 'dinner', 'snacks'
-let dailyLog = { // A kiválasztott nap ételei
-    breakfast: [],
-    lunch: [],
-    dinner: [],
-    snacks: []
-};
+let dailyLog = {}; // Eltárolja az adott nap API-ból betöltött log bejegyzéseit
+const mealTitles = { breakfast: 'Reggeli', lunch: 'Ebéd', dinner: 'Vacsora', snacks: 'Nasi' };
+
+// Segédfüggvény a YYYY-MM-DD formátumhoz
+function dateToISO(d) {
+    return d.toISOString().slice(0, 10); // YYYY-MM-DD
+}
 
 // --- Elemek ---
 // A $ és $$ segédfüggvényeket a globális script.js-ből kapjuk
@@ -52,7 +55,9 @@ function updateDayView() {
     if (!dayLabel) return;
     
     const today = new Date();
-    if (selectedDate.toDateString() === today.toDateString()) {
+    selectedDateKey = dateToISO(selectedDate); // Frissítjük a key-t is
+    
+    if (selectedDateKey === dateToISO(today)) {
         dayLabel.textContent = "Mai nap";
     } else {
         dayLabel.textContent = selectedDate.toLocaleDateString('hu-HU', {
@@ -62,11 +67,7 @@ function updateDayView() {
         });
     }
 
-    // TODO: Adatbázisból betöltés
-    dailyLog = { breakfast: [], lunch: [], dinner: [], snacks: [] };
-    
-    renderDailyFoodList();
-    updateMacroDisplays(); // Frissítjük a diagramot is
+    fetchDailyLog();
 }
 
 /**
@@ -103,20 +104,84 @@ function initMealTabs() {
 }
 
 /**
- * 3. ÉTEL HOZZÁADÁSA ÉS LISTÁZÁSA
+ * Étel hozzáadása a loghoz (API-val)
+ * @param {object} item - Az étel teljes objektuma a /foods/search válaszából (benne food_id, food_name stb.)
  */
-function addFoodToLog(foodItem) {
-    dailyLog[activeMealType].push(foodItem);
-    renderDailyFoodList();
-    updateMacroDisplays();
-    modal.style.display = 'none';
+async function addFoodToLog(item) {
+    if (!token) {
+        alert("A bejegyzés mentéséhez bejelentkezés szükséges.");
+        modal.style.display = 'none';
+        return;
+    }
+    
+    // 1. Megoldjuk az "undefined ételből" hibát
+    const itemName = item.food_name || item.name || "Ismeretlen étel";
+    
+    // 2. Kérjük a mennyiséget
+    const quantityStr = prompt(`Hány grammot fogyasztottál a(z) ${itemName} ételből? (grammban)`);
+    if (!quantityStr) {
+        modal.style.display = 'none';
+        return;
+    }
+    
+    // 3. Tisztítjuk és validáljuk a bevitelt (pl. "100(g)" -> 100)
+    const cleanedQuantityStr = quantityStr.replace(/[^\d.]/g, ''); // Csak számokat és pontot tart meg
+    const quantity_grams = parseFloat(cleanedQuantityStr);
+
+    if (isNaN(quantity_grams) || quantity_grams <= 0) {
+        alert(`❌ Érvénytelen mennyiség: ${quantityStr}. Kérlek, pozitív számot adj meg grammban.`);
+        modal.style.display = 'none';
+        return;
+    }
+
+    // 4. Payload összeállítása (item.food_id most már a teljes objektumból jön)
+    const payload = {
+        food_id: item.food_id, // <--- Ez már helyesen, a teljes objektumból töltődik be
+        meal_type: activeMealType,
+        quantity_grams: quantity_grams,
+        date: selectedDateKey 
+    };
+    
+    try {
+        const res = await fetch("/api/v1/food_log/", {
+            method: "POST",
+            headers: { 
+                "Content-Type": "application/json", 
+                "Authorization": `Bearer ${token}` 
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            // Megpróbáljuk JSON-ként olvasni a hibaüzenetet
+            const errBody = await res.text();
+            try {
+                const errJson = JSON.parse(errBody);
+                throw new Error(errJson.detail || `HTTP ${res.status} hiba a mentéskor.`);
+            } catch (parseError) {
+                 // Ha a válasz nem JSON (pl. a szerver belső hibája)
+                throw new Error(`Hiba a mentéskor (${res.status}). Részletek: ${errBody.substring(0, 50)}...`);
+            }
+        }
+        
+        // Sikeres mentés után frissítjük a teljes napi nézetet
+        await fetchDailyLog();
+        modal.style.display = 'none';
+        
+    } catch (err) {
+        console.error(err);
+        // Itt már az Error objektummal dolgozunk
+        alert(`❌ Hiba: ${err.message || String(err)}`); 
+        modal.style.display = 'none';
+    }
 }
 
 function renderDailyFoodList() {
     if (!dailyFoodList) return;
     dailyFoodList.innerHTML = '';
     let totalItems = 0;
-    const mealTitles = { breakfast: 'Reggeli', lunch: 'Ebéd', dinner: 'Vacsora', snacks: 'Nasi' };
+    
+    // A hivatkozott mealTitles most már az új scope-ban elérhető.
 
     for (const mealType in dailyLog) {
         const items = dailyLog[mealType];
@@ -129,8 +194,9 @@ function renderDailyFoodList() {
             items.forEach(item => {
                 const row = document.createElement('div');
                 row.className = 'meal-item';
+                // Fontos: a kcal már a helyes mennyiségre van számítva a fetchDailyLog-ban
                 row.innerHTML = `
-                    <span>${item.name} <small class="muted">(100g)</small></span>
+                    <span>${item.name} <small class="muted">(${item.quantity}g)</small></span>
                     <span class="kcal">${Math.round(item.kcal)} kcal</span>
                 `;
                 dailyFoodList.appendChild(row);
@@ -145,23 +211,19 @@ function renderDailyFoodList() {
     }
 }
 
-/**
- * 4. MAKRÓ SZÁMÍTÁS (Felülírja a script.js-ben lévő üres függvényt)
- * EZ A VERZIÓ KÜLÖN KEZELI A KALÓRIÁT (KÖR) ÉS A MAKRÓKAT (SÁVOK)
- * JAVÍTVA A 0% RENDERELÉSI HIBÁVAL
- */
-/**
- * 4. MAKRÓ SZÁMÍTÁS (az új körös dizájnhoz igazítva)
- */
+
 /**
  * 4. MAKRÓ SZÁMÍTÁS (az új, statikus nagy kör + 3 kicsi dizájnhoz)
  */
 function updateMacroDisplays() {
+    // A célmakrók a globális targetMacros-ból jönnek (script.js tölti be)
+
     // --- 1. ÖSSZES FOGYASZTÁS KISZÁMÍTÁSA (grammban) ---
     let pConsumed = 0, cConsumed = 0, fConsumed = 0, calConsumed = 0;
 
     for (const mealType in dailyLog) {
         dailyLog[mealType].forEach(item => {
+            // A fetchDailyLog már kiszámolta a tényleges fogyasztott grammokat (item.p, item.c, item.f)
             pConsumed += (item.p || 0);
             cConsumed += (item.c || 0);
             fConsumed += (item.f || 0);
@@ -170,6 +232,7 @@ function updateMacroDisplays() {
     }
 
     // --- 2. CÉL MAKRÓK (a globális 'targetMacros'-ból) ---
+    // A 0-val való osztás elkerülése érdekében 1 a minimum, ha a cél nincs beállítva.
     const pGoal = targetMacros.p > 0 ? targetMacros.p : 1;
     const cGoal = targetMacros.c > 0 ? targetMacros.c : 1;
     const fGoal = targetMacros.f > 0 ? targetMacros.f : 1;
@@ -198,7 +261,7 @@ function updateMacroDisplays() {
     const proteinValue = $('#proteinValue');
     if (proteinCircle && proteinValue) {
         const pRemaining = Math.round(targetMacros.p - pConsumed);
-        // A progress a HÁTRALÉVŐ százalékot mutatja
+        // A progress a HÁTRALÉVŐ százalékot mutatja (max. 100%)
         const pProgressPercent = Math.max(0, Math.min(100, (pRemaining / pGoal) * 100));
 
         proteinValue.textContent = pRemaining;
@@ -246,6 +309,55 @@ function updateMacroDisplays() {
     }
 }
 
+/**
+ * Adott nap (selectedDateKey) étel logjának lekérése az API-ból.
+ */
+async function fetchDailyLog() {
+    if (!token) return;
+    
+    selectedDateKey = dateToISO(selectedDate);
+    
+    try {
+        const res = await fetch(`/api/v1/food_log/?date_str=${selectedDateKey}`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (res.status === 404 || res.status === 200) {
+            // A 404 OK, ha nincs még bejegyzés.
+            const logData = (res.status === 200) ? await res.json() : [];
+            
+            // Csoportosítjuk az adatokat étkezéstípus szerint a könnyebb rendereléshez
+            dailyLog = logData.reduce((acc, entry) => {
+                const q = entry.quantity_grams / 100;
+                const item = {
+                    log_id: entry.log_id,
+                    food_id: entry.food_id,
+                    name: entry.food_name,
+                    // Makrók kiszámítása 100g-ból a tényleges mennyiségre
+                    kcal: Math.round(entry.kcal_100g * q),
+                    p: Math.round(entry.protein_100g * q),
+                    c: Math.round(entry.carbs_100g * q),
+                    f: Math.round(entry.fat_100g * q),
+                    quantity: entry.quantity_grams,
+                };
+                acc[entry.meal_type] = acc[entry.meal_type] || [];
+                acc[entry.meal_type].push(item);
+                return acc;
+            }, {});
+            
+            renderDailyFoodList();
+            updateMacroDisplays();
+            
+        } else {
+            throw new Error(`HTTP ${res.status}`);
+        }
+
+    } catch (err) {
+        console.error("Hiba a napi log lekérésekor:", err);
+        // Itt beállíthatunk egy hibaüzenetet a felhasználónak, ha van megfelelő UI elem
+    }
+}
+
 
 /**
  * 5. ÉTEL KERESŐ (Csak a modal-ban fut)
@@ -281,7 +393,7 @@ async function doFoodSearch(isModal = false) {
             const f = Math.round(item.fat_100g || 0);
 
             row.innerHTML = `<span>${item.food_name} <small class="muted">(${kcal} kcal • P${p}/C${c}/F${f})</small></span><button>${(LANG === 'hu') ? 'Hozzáad' : 'Add'}</button>`;
-            row.querySelector('button').addEventListener('click', () => addFoodToLog({ name: item.food_name, kcal: kcal, p: p, c: c, f: f }));
+            row.querySelector('button').addEventListener('click', () => addFoodToLog(item));
             modalResults.appendChild(row);
         });
 
@@ -297,8 +409,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if ($('#diet-panel-top')) {
         initDayNavigator();
         initMealTabs();
-        // A makrókat a globális script.js fogja frissíteni bejelentkezés után,
-        // de mi lefuttatjuk, hogy 0-ról induljon.
-        updateMacroDisplays();
+        
+        // Hívás indítása a kezdeti adatok betöltéséhez
+        if (token) {
+             fetchDailyLog();
+        } else {
+             renderDailyFoodList(); // Ha nincs token, csak üres listát mutatunk.
+        }
+       
     }
 });

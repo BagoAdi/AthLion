@@ -20,3 +20,4 @@ class User(Base):
     conditions = relationship("UserCondition", back_populates="user", cascade="all, delete-orphan")
     diet_profiles = relationship("DietProfile", back_populates="user", cascade="all, delete-orphan")
     training_profiles = relationship("TrainingProfile", back_populates="user", cascade="all, delete-orphan")
+    food_logs = relationship("UserFoodLog", back_populates="user", cascade="all, delete-orphan")

@@ -43,7 +43,19 @@
 /* --- LAYOUT PANELEK --- */
 .page { padding: 0 28px 32px; }
 .page .panel { max-width: 1400px; margin: 0 auto; }
-.panel { width: 100%; height: 100%; padding-top: 120px; display: grid; grid-template-rows: auto 1fr; gap: 22px; }
+.panel {
+  width: 100%; 
+  
+  min-height: 100vh; /* Legalább akkora, mint a képernyő */
+  height: auto;      /* De ha több a tartalom, nőjön tovább */
+  
+  padding-top: 120px; 
+  display: grid; 
+  grid-template-rows: auto 1fr; 
+  gap: 22px; 
+  
+  padding-bottom: 40px;
+}
 .panel-inner { display: grid; grid-template-columns: 1.1fr 1fr; gap: 22px; }
 .card { border-radius: var(--radius-lg); }
 
@@ -155,20 +167,183 @@
 
 .daily-food-list h4 { font-size: 15px; margin: 12px 0 6px 0; color: var(--gold-1); border-bottom: 1px solid var(--border); padding-bottom: 4px; }
 .daily-food-list h4:first-child { margin-top: 0; }
-.daily-food-list .meal-item { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px dashed #272727; padding: 10px 0; font-size: 14px; }
+/* ... layout.css vége felé ... */
+
+.daily-food-list .meal-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px dashed #272727;
+  padding: 8px 0;
+  font-size: 14px;
+  /* Új: kell a gap, hogy ne érjenek össze */
+  gap: 10px;
+}
+
+/* Új konténer a szövegnek és a kalóriának, hogy a törlés gomb külön legyen */
+.meal-info {
+  flex: 1; /* Kitölti a rendelkezésre álló helyet */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Törlés gomb stílusa */
+.btn-delete-log {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  opacity: 0.6;
+}
+
+.btn-delete-log:hover {
+  background: rgba(255, 70, 70, 0.15); /* Halvány piros háttér */
+  color: #ff6b6b; /* Piros ikon */
+  opacity: 1;
+}
 .daily-food-list .kcal { color: var(--gold-2); font-weight: 800; font-size: 13px; }
 
-/* --- MODAL --- */
-.modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); z-index: 100; display: grid; place-items: center; padding: 20px; }
-.modal-content { width: 100%; max-width: 500px; padding: 28px; position: relative; }
-.modal-close-btn { position: absolute; top: 14px; right: 14px; border: none; background: var(--glass-bg); color: var(--muted); border-radius: 999px; width: 36px; height: 36px; display: grid; place-items: center; cursor: pointer; transition: background 0.2s, color 0.2s; }
-.modal-close-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
-.modal-content h3 { margin-top: 0; margin-bottom: 14px; }
-.modal-content .search-row { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 12px; }
-.modal-content .results { max-height: 300px; overflow: auto; margin-top: 10px; }
-.modal-content .result { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px dashed #222; font-size: 14px; }
-.modal-content .result button { border: none; border-radius: 10px; padding: 6px 10px; font-weight: 700; background: linear-gradient(135deg, var(--gold-1), var(--gold-2)); color: #161616; cursor: pointer; margin-right: 8px; }
+/* --- MODAL (Javított) --- */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.8); /* Sötétebb háttér a jobb kontrasztért */
+  backdrop-filter: blur(8px);
+  z-index: 100;
+  display: grid; place-items: center;
+  padding: 20px;
+}
 
+.modal-content.modal-wide {
+  max-width: 900px; width: 100%;
+  height: 75vh; /* Picit alacsonyabb, hogy biztosan kiférjen */
+  display: flex; flex-direction: column;
+  padding: 24px; /* Belső térköz */
+  background: rgba(19, 36, 60, 0.95); /* Erősebb háttérszín */
+  border-radius: 24px; /* Lekerekítés mindenhol */
+  border: 1px solid var(--glass-stroke);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+}
+
+/* Címsor és Bezáró gomb egy sorban */
+.modal-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding-bottom: 10px;
+}
+
+.modal-close-btn {
+  position: static; /* Nem abszolút, hanem a flexbox része */
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center;
+}
+.modal-close-btn:hover {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+}
+
+/* Kétoszlopos elrendezés */
+.modal-split-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  flex: 1;
+  overflow: hidden; /* Hogy ne folyjon ki a tartalom */
+}
+
+/* BAL OSZLOP */
+.modal-left-col {
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+/* A Keresőmező javítása (sötét stílus) */
+#modalFoodQuery {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--glass-stroke);
+  color: #fff;
+  padding: 12px 14px;
+  border-radius: 12px;
+  outline: none;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+#modalFoodQuery:focus {
+  border-color: var(--gold-1);
+  box-shadow: 0 0 0 2px rgba(62, 142, 222, 0.2);
+}
+
+.modal-content .results {
+  flex: 1;
+  overflow-y: auto;
+  margin-top: 14px;
+  padding-right: 5px;
+}
+
+/* Result elem */
+.modal-content .result {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid transparent;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.modal-content .result:hover {
+  background: rgba(255,255,255,0.08);
+}
+.modal-content .result.active {
+  background: linear-gradient(90deg, rgba(62,142,222,0.25), transparent);
+  border-left: 3px solid var(--gold-1);
+}
+/* Régi gomb elrejtése a listában */
+.modal-content .result button { display: none; }
+
+/* JOBB OSZLOP */
+.modal-right-col {
+  background: rgba(0,0,0,0.25); /* Sötétebb panel */
+  border-radius: 18px;
+  padding: 24px;
+  display: flex; flex-direction: column;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Preview makrók */
+.preview-macros {
+  display: flex; justify-content: space-between;
+  background: rgba(255,255,255,0.05);
+  padding: 15px;
+  border-radius: 14px;
+  margin-bottom: 20px;
+}
+.pm-item { display: flex; flex-direction: column; align-items: center; }
+.pm-val { font-size: 18px; font-weight: 800; color: #fff; }
+.pm-label { font-size: 10px; color: var(--muted); font-weight: 600; margin-top: 2px; }
+
+/* Reszponzivitás */
+@media (max-width: 700px) {
+  .modal-split-layout { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; overflow-y: auto; }
+  .modal-content.modal-wide { height: 95vh; padding: 16px; }
+  .modal-right-col { padding: 16px; }
+}
 /* --- MULTISELECT DROPDOWN STÍLUSOK --- */
 .multiselect {
   position: relative;
@@ -281,4 +456,78 @@
 }
 @media (max-width: 600px) {
   .macro-circles { flex-direction: column; gap: 20px; }
+}
+
+/* --- GÖRGŐ (SCROLLBAR) STILIZÁLÁSA --- */
+/* Ez a Webkit böngészőkre vonatkozik (Chrome, Edge, Safari, Opera) */
+
+/* A görgő "pályája" */
+.results::-webkit-scrollbar {
+  width: 6px; /* Sokkal vékonyabb, mint a gyári */
+}
+
+/* A háttér */
+.results::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02); 
+  border-radius: 4px;
+}
+
+/* Maga a mozgó csúszka */
+.results::-webkit-scrollbar-thumb {
+  background: var(--glass-stroke); /* Illeszkedik a keretek színéhez */
+  border-radius: 4px;
+}
+
+/* Ha ráviszed az egeret a csúszkára */
+.results::-webkit-scrollbar-thumb:hover {
+  background: var(--muted); /* Kicsit világosabb lesz */
+}
+
+
+/* --- SZÁM INPUT NYILAK ELTÜNTETÉSE --- */
+/* Azt szeretnénk, hogy a mennyiség mező sima szövegdoboznak nézzen ki,
+   mert a gyári nyilak nem illenek a designba. */
+
+/* Chrome, Safari, Edge, Opera */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Mennyiség mező finomítása, hogy ugyanolyan legyen, mint a kereső */
+#selQuantity {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--glass-stroke);
+  color: var(--gold-1); /* Legyen aranyszínű a szám, hogy kiemelkedjen */
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 18px;
+  text-align: center; /* Középre igazítva szebb */
+  transition: border-color 0.2s;
+}
+
+#selQuantity:focus {
+  outline: none;
+  border-color: var(--gold-1);
+  box-shadow: 0 0 0 2px rgba(62, 142, 222, 0.2);
+}
+
+/* Piros veszély gomb */
+.btn-danger {
+  background: linear-gradient(135deg, #ff6b6b, #ee5253);
+  color: #fff;
+  border: none;
+  box-shadow: 0 4px 15px rgba(238, 82, 83, 0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-danger:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(238, 82, 83, 0.6);
 }

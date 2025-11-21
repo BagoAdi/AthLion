@@ -97,3 +97,25 @@ def get_daily_food_log(
         ))
         
     return response
+
+@router.delete("/{log_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_food_log_entry(
+    log_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Töröl egy étel bejegyzést a naplóból."""
+    
+    # Megkeressük a bejegyzést, és ellenőrizzük, hogy a bejelentkezett felhasználóé-e
+    log_entry = db.query(UserFoodLog).filter(
+        UserFoodLog.log_id == log_id,
+        UserFoodLog.user_id == current_user.user_id
+    ).first()
+
+    if not log_entry:
+        raise HTTPException(status_code=404, detail="Log entry not found")
+
+    db.delete(log_entry)
+    db.commit()
+    
+    return None

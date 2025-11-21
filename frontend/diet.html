@@ -121,17 +121,61 @@
   </main>
 
   <div class="modal-overlay" id="foodSearchModal" style="display: none;">
-    <div class="modal-content card glass">
-      <button class="modal-close-btn" id="modalCloseBtn" title="Bezárás">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width: 24px; height: 24px;"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-      </button>
-
-      <h3 id="modalTitle">Étel keresése</h3>
-      <div class="search-row">
-        <input id="modalFoodQuery" type="text" placeholder="pl. csirkemell, zab..." />
+    <div class="modal-content glass modal-wide">
+      
+      <div class="modal-header-row">
+        <h3 id="modalTitle" style="margin: 0;">Étel keresése</h3>
+        <button class="modal-close-btn" id="modalCloseBtn" title="Bezárás">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width: 24px; height: 24px;"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
       </div>
-      <div class="results" id="modalFoodResults">
-        <p class="muted" style="padding: 10px 0;">Írj be legalább 3 karaktert a kereséshez.</p>
+
+      <div class="modal-split-layout">
+        <div class="modal-left-col">
+          <div class="search-row">
+            <input id="modalFoodQuery" type="text" placeholder="Írd be az étel nevét..." autocomplete="off" />
+          </div>
+          <div class="results" id="modalFoodResults">
+            <p class="muted small" style="padding: 10px 0;">Írj be legalább 3 karaktert.</p>
+          </div>
+        </div>
+
+        <div class="modal-right-col glass-panel">
+          <div id="foodSelectionPlaceholder" style="text-align: center; padding: 20px; color: var(--muted);">
+            <p>Válassz egy ételt a bal oldali listából!</p>
+          </div>
+
+          <div id="foodSelectionDetails" style="display: none;">
+            <h4 id="selFoodName" style="margin: 0 0 5px 0; color: var(--gold-1);">Étel neve</h4>
+            <div class="base-info muted small" style="margin-bottom: 15px;">100g tartalmaz: <span id="selBaseMacros"></span></div>
+
+            <label for="selQuantity" class="small muted">Mennyiség (gramm)</label>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+              <input type="number" id="selQuantity" placeholder="100" value="100" style="font-weight: bold;" />
+            </div>
+
+            <div class="preview-macros">
+              <div class="pm-item"><span class="pm-val" id="prevKcal">0</span><span class="pm-label">KCAL</span></div>
+              <div class="pm-item"><span class="pm-val" id="prevP">0</span><span class="pm-label">Fehérje</span></div>
+              <div class="pm-item"><span class="pm-val" id="prevC">0</span><span class="pm-label">Szénhidrát</span></div>
+              <div class="pm-item"><span class="pm-val" id="prevF">0</span><span class="pm-label">Zsír</span></div>
+            </div>
+
+            <button class="btn" id="btnAddSelection" style="margin-top: auto;">Hozzáadás a naplóhoz</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="confirmModal" style="display: none; z-index: 200;">
+    <div class="modal-content glass" style="max-width: 360px; text-align: center; padding: 30px;">
+      <h3 style="margin-top: 0; margin-bottom: 15px;">Biztosan törlöd?</h3>
+      <p class="muted" style="margin-bottom: 25px; font-size: 14px;">Ezt a műveletet nem lehet visszavonni.</p>
+      
+      <div style="display: flex; gap: 12px; justify-content: center;">
+        <button class="btn ghost" id="confirmNo" style="margin-top: 0; flex: 1;">Mégse</button>
+        <button class="btn btn-danger" id="confirmYes" style="margin-top: 0; flex: 1;">Törlés</button>
       </div>
     </div>
   </div>

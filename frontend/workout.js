@@ -34,6 +34,40 @@
     "Nehéz": "expert"
   };
 
+  function normalizeLoadLevel(raw) {
+    if (!raw) return "Közepes";
+    const s = String(raw).toLowerCase().trim();
+
+    if (
+      s.includes("könny") ||
+      s.includes("konny") ||
+      s.includes("easy") ||
+      s.includes("light")
+    ) {
+      return "Könnyű";
+    }
+
+    if (
+      s.includes("nehéz") ||
+      s.includes("nehez") ||
+      s.includes("hard") ||
+      s.includes("heavy")
+    ) {
+      return "Nehéz";
+    }
+
+    return "Közepes";
+  }
+  
+  function authHeaders(extra = {}) {
+    const token = localStorage.getItem("token");
+    const headers = { ...extra };
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    return headers;
+  }
+
   let loadLevel = null; // "Könnyű" | "Közepes" | "Nehéz"
 
   // Kardió adatok
@@ -73,46 +107,92 @@
     return `${y}. ${m}. ${day}. (${dn})`;
   }
 
-  // ---------- USER LOAD LEVEL ----------
+  // ---------- LOAD LEVEL NORMALIZÁLÁS ----------
+
+  // Backend bármit visszaadhat: "Könnyű", "konnyu", "easy", "light", "medium", "hard" stb.
+  // Ebből mindig: "Könnyű" | "Közepes" | "Nehéz" lesz.
+  function normalizeLoadLevel(raw) {
+    if (!raw) return "Közepes";
+    const s = String(raw).toLowerCase().trim();
+
+    // könnyű / easy / light
+    if (
+      s.includes("könny") ||
+      s.includes("konny") ||
+      s.includes("easy") ||
+      s.includes("light")
+    ) {
+      return "Könnyű";
+    }
+
+    // nehéz / hard / heavy
+    if (
+      s.includes("nehéz") ||
+      s.includes("nehez") ||
+      s.includes("hard") ||
+      s.includes("heavy")
+    ) {
+      return "Nehéz";
+    }
+
+    // minden más → közepes (medium / moderate / stb.)
+    return "Közepes";
+  }
+
+   // ---------- USER LOAD LEVEL ----------
 
   async function fetchLoadLevel() {
+    // 1) Elsőként próbáljuk a localStorage-et (setup.html tette bele)
+    const stored = localStorage.getItem("athlion_load_level");
+    if (stored) {
+      loadLevel = normalizeLoadLevel(stored);
+      console.log("loadLevel from localStorage (raw → normalized):", stored, "→", loadLevel);
+      return;
+    }
+
+    // 2) Ha nincs localStorage-ben, próbáljuk backendről
     try {
       const res = await fetch("/api/v1/users/me", {
+        // ha betetted az authHeaders helper-t, akkor így:
+        // headers: authHeaders(),
+        // ha nem, maradhat ez:
         credentials: "include"
       });
       if (!res.ok) throw new Error("Hiba a load level lekérésénél");
 
       const data = await res.json();
-      let lvl = null;
+      let raw = null;
 
-      // 1) ha training_profile objektum vagy lista
+      // ha valaha bekerül a training_profile a response-ba, ezt már támogatjuk:
       if (data.training_profile) {
         if (Array.isArray(data.training_profile)) {
-          lvl = data.training_profile[0]?.load_level || null;
+          raw = data.training_profile[0]?.load_level || null;
         } else if (typeof data.training_profile === "object") {
-          lvl = data.training_profile.load_level || null;
+          raw = data.training_profile.load_level || null;
         }
       }
 
-      // 2) ha véletlenül a rooton van
-      if (!lvl && data.load_level) {
-        lvl = data.load_level;
+      // ha netán a rooton lenne
+      if (!raw && data.load_level) {
+        raw = data.load_level;
       }
 
-      loadLevel = lvl || "Közepes";
-      console.log("loadLevel from /users/me:", loadLevel);
+      loadLevel = normalizeLoadLevel(raw);
+      console.log("loadLevel from /users/me (raw → normalized):", raw, "→", loadLevel);
     } catch (err) {
       console.error(err);
       loadLevel = "Közepes";
+      console.log("loadLevel fallback:", loadLevel);
     }
   }
+
 
   // ---------- EDZŐTEREM GYAKORLATOK ----------
 
   async function loadGymExercises() {
     try {
       const res = await fetch("/api/v1/exercises/", {
-        credentials: "include"
+        headers: authHeaders(),
       });
       if (!res.ok) throw new Error("Hiba az edzésgyakorlatok lekérésénél");
 
@@ -144,7 +224,7 @@
   async function loadCardioActivities() {
     try {
       const res = await fetch("/api/v1/physical_activities/?limit=150", {
-        credentials: "include"
+        headers: authHeaders(),
       });
       if (!res.ok) throw new Error("Hiba a kardió aktivitások lekérésénél");
       const data = await res.json();

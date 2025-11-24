@@ -9,6 +9,39 @@ from typing import Optional
 class Config:
     from_attributes = True
 
+
+# ======== Training Profile ========
+
+class TrainingProfileOut(BaseModel):
+    training_id: int
+    start_id: int
+    load_level: str
+    program_time: Optional[str] = None
+    preference: Optional[str] = None
+
+    class Config:
+        orm_mode = True
+
+class TrainingProfileIn(BaseModel):
+    """Séma edzésprofil létrehozásához."""
+    start_id: int
+    load_level: str = Field(max_length=50)
+    program_time: str = Field(max_length=50)
+    preference: Optional[str] = Field(None, max_length=100)
+    
+class TrainingProfileOut(BaseModel):
+    """Séma edzésprofil visszaadásához."""
+    training_id: int
+    user_id: int
+    start_id: int
+    load_level: str
+    program_time: str
+    preference: Optional[str]
+    is_active: int
+    
+    class Config(Config):
+        pass
+
 # ======== User ========
 
 class UserOut(BaseModel):
@@ -21,6 +54,8 @@ class UserOut(BaseModel):
     sex: str
     created_at: datetime
 
+    
+    training_profile: Optional[TrainingProfileOut] = None
     class Config(Config):
         pass
 
@@ -52,27 +87,7 @@ class StartStateOut(BaseModel):
     class Config(Config):
         pass
 
-# ======== Training Profile ========
 
-class TrainingProfileIn(BaseModel):
-    """Séma edzésprofil létrehozásához."""
-    start_id: int
-    load_level: str = Field(max_length=50)
-    program_time: str = Field(max_length=50)
-    preference: Optional[str] = Field(None, max_length=100)
-    
-class TrainingProfileOut(BaseModel):
-    """Séma edzésprofil visszaadásához."""
-    training_id: int
-    user_id: int
-    start_id: int
-    load_level: str
-    program_time: str
-    preference: Optional[str]
-    is_active: int
-    
-    class Config(Config):
-        pass
 
 # Ide tedd a többi sémát is (DietProfileIn/Out, UserAllergyIn/Out, stb.)
 # ahogy haladtok előre.

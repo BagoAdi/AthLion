@@ -92,6 +92,84 @@
   // melyik hónap van épp megjelenítve (első napra állítva)
   let calendarMonth = new Date();
   calendarMonth.setDate(1);
+  // ---------- WORKOUTS BACKEND KOMM ----------
+
+  async function fetchUserWorkouts() {
+    try {
+      const res = await fetch("/api/v1/workouts/", {
+        headers: authHeaders()
+      });
+      if (res.ok) {
+        const logs = await res.json();
+        console.log("Letöltött edzések:", logs);
+        processServerLogs(logs);
+      }
+    } catch (err) {
+      console.error("Nem sikerült betölteni az edzésnaplót:", err);
+    }
+  }
+
+  async function saveWorkoutToServer(dateStr, mode, dayType, mainIds, extraIds, cardioId) {
+    const payload = {
+      date: dateStr,
+      mode: mode,
+      day_type: dayType, // lehet null
+      data: {
+        main_ids: mainIds || [],
+        extra_ids: extraIds || [],
+        cardio_id: cardioId || null
+      }
+    };
+
+    try {
+      const res = await fetch("/api/v1/workouts/", {
+        method: "POST",
+        headers: authHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error("Mentés sikertelen");
+      console.log("Edzés sikeresen mentve!");
+    } catch (err) {
+      console.error("Hiba a mentéskor:", err);
+      alert("Hiba: Nem sikerült menteni a szerverre. Ellenőrizd a kapcsolatot!");
+    }
+  }
+
+  function processServerLogs(logs) {
+    // A szerverről jövő adatokat visszaalakítjuk a frontend formátumára (calendarData)
+    logs.forEach(log => {
+      const key = log.date; // YYYY-MM-DD
+      
+      if (log.mode === "gym") {
+        // ID-k alapján megkeressük a teljes gyakorlat objektumokat
+        const main = (log.data.main_ids || []).map(id => EXERCISES.find(e => e.id == id)).filter(Boolean);
+        const extra = (log.data.extra_ids || []).map(id => EXERCISES.find(e => e.id == id)).filter(Boolean);
+        
+        calendarData[key] = {
+          mode: "gym",
+          dayType: log.day_type,
+          main: main,
+          extra: extra
+        };
+      } else if (log.mode === "cardio") {
+        const act = cardioActivities.find(c => c.id == log.data.cardio_id);
+        if (act) {
+          calendarData[key] = {
+            mode: "cardio",
+            cardio: act
+          };
+        }
+      }
+    });
+    
+    // Frissítjük a naptárat, hogy látszódjanak a betöltött napok
+    renderCalendar();
+    
+    // Ha a mai napra volt mentés, töltsük be
+    if (calendarData[selectedDateKey]) {
+        selectCalendarDay(selectedDateKey);
+    }
+  }
 
   // ---------- KÖZÖS DATE HELPER ----------
 
@@ -141,51 +219,62 @@
 
    // ---------- USER LOAD LEVEL ----------
 
-  async function fetchLoadLevel() {
-    // 1) Elsőként próbáljuk a localStorage-et (setup.html tette bele)
-    const stored = localStorage.getItem("athlion_load_level");
-    if (stored) {
-      loadLevel = normalizeLoadLevel(stored);
-      console.log("loadLevel from localStorage (raw → normalized):", stored, "→", loadLevel);
-      return;
-    }
+// frontend/workout.js - Cseréld le a fetchLoadLevel függvényt erre:
 
-    // 2) Ha nincs localStorage-ben, próbáljuk backendről
+  // frontend/workout.js - fetchLoadLevel JAVÍTOTT verzió
+
+  async function fetchLoadLevel() {
+    let apiData = null;
+
     try {
+      // JAVÍTÁS: Hozzáadtuk a headers-t, hogy a tokent is elküldje!
       const res = await fetch("/api/v1/users/me", {
-        // ha betetted az authHeaders helper-t, akkor így:
-        // headers: authHeaders(),
-        // ha nem, maradhat ez:
+        method: "GET",
+        headers: authHeaders(), // <--- EZ HIÁNYZOTT! Enélkül 401-et kapsz.
         credentials: "include"
       });
-      if (!res.ok) throw new Error("Hiba a load level lekérésénél");
+      
+      if (res.ok) {
+        const data = await res.json();
+        console.log("Profile Data (Server):", data);
 
-      const data = await res.json();
-      let raw = null;
-
-      // ha valaha bekerül a training_profile a response-ba, ezt már támogatjuk:
-      if (data.training_profile) {
-        if (Array.isArray(data.training_profile)) {
-          raw = data.training_profile[0]?.load_level || null;
-        } else if (typeof data.training_profile === "object") {
-          raw = data.training_profile.load_level || null;
+        // --- ADATFELDOLGOZÁS ---
+        if (data.training_profiles && Array.isArray(data.training_profiles)) {
+          const activeProfile = data.training_profiles.find(p => p.is_active === 1);
+          
+          if (activeProfile) {
+            apiData = activeProfile.load_level;
+          } else if (data.training_profiles.length > 0) {
+            apiData = data.training_profiles[0].load_level;
+          }
+        }
+        else if (data.training_profile && typeof data.training_profile === "object") {
+          apiData = data.training_profile.load_level;
+        }
+      } else {
+        // Ha 401 van, akkor lehet, hogy lejárt a bejelentkezés
+        if (res.status === 401) {
+            console.warn("Lejárt a bejelentkezés, vagy hiányzik a token.");
         }
       }
-
-      // ha netán a rooton lenne
-      if (!raw && data.load_level) {
-        raw = data.load_level;
-      }
-
-      loadLevel = normalizeLoadLevel(raw);
-      console.log("loadLevel from /users/me (raw → normalized):", raw, "→", loadLevel);
     } catch (err) {
-      console.error(err);
-      loadLevel = "Közepes";
-      console.log("loadLevel fallback:", loadLevel);
+      console.warn("Backend fetch failed, using fallback:", err);
+    }
+
+    // 2. ÉRTÉK BEÁLLÍTÁSA
+    if (apiData) {
+      loadLevel = normalizeLoadLevel(apiData);
+      localStorage.setItem("athlion_load_level", loadLevel);
+      console.log("LoadLevel updated from Server:", loadLevel);
+    } else {
+      const stored = localStorage.getItem("athlion_load_level");
+      if (stored) {
+        loadLevel = normalizeLoadLevel(stored);
+      } else {
+        loadLevel = "Közepes";
+      }
     }
   }
-
 
   // ---------- EDZŐTEREM GYAKORLATOK ----------
 
@@ -829,25 +918,36 @@
       const key = selectedDateKey || dateKey(new Date());
 
       if (workoutMode === "gym") {
-        if (mainExercises.length < 3) {
-          alert("Legalább 3 fő gyakorlat szükséges a nap lezárásához.");
-          return;
-        }
+        // ... validáció ...
         calendarData[key] = {
           mode: "gym",
           dayType: currentDayType,
           main: [...mainExercises],
           extra: [...extraExercises]
         };
+
+        // SZERVERRE MENTÉS (GYM)
+        saveWorkoutToServer(
+          key, 
+          "gym", 
+          currentDayType, 
+          mainExercises.map(e => e.id), 
+          extraExercises.map(e => e.id), 
+          null
+        );
+
       } else if (workoutMode === "cardio") {
-        if (!cardioSelection) {
-          alert("Válassz ki egy kardió aktivitást.");
-          return;
-        }
+         // ... validáció ...
         calendarData[key] = {
           mode: "cardio",
           cardio: { ...cardioSelection }
         };
+
+        // SZERVERRE MENTÉS (CARDIO)
+        // Feltételezzük, hogy a cardioSelection-nek van 'id'-ja. 
+        // Ha nincs, a DB-be importálásnál kell generálni neki, vagy név alapján menteni.
+        const cId = cardioSelection.id || null; 
+        saveWorkoutToServer(key, "cardio", null, [], [], cId);
       }
 
       dayLocked = true;
@@ -903,6 +1003,8 @@
     await fetchLoadLevel();      // először szint
     await loadGymExercises();    // kell a lista
     await loadCardioActivities();
+
+    await fetchUserWorkouts();
 
     setupModeSelector();
     setupThemeToggle();

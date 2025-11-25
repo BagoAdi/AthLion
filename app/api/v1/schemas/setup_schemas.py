@@ -6,6 +6,7 @@ class SetupIn(BaseModel):
     start_weight_kg: float
     target_weight_kg: float
     goal_type: str        # pl. "weight_loss"
+    diet_preference: str
     load_level: str       # pl. "Közepes"
     program_time: str     # pl. "30-45 perc"
     preference: str       # pl. "Vegyes"
@@ -24,6 +25,7 @@ class ProfileOut(BaseModel):
     start_weight_kg: float
     target_weight_kg: float
     goal_type: str
+    diet_preference: Optional[str] = None
     load_level: str
     allergy_ids: List[int] = []
     injury_ids: List[int] = []
@@ -38,6 +40,7 @@ class ProfileUpdate(BaseModel):
     """
     start_weight_kg: Optional[float] = None
     goal_type: Optional[str] = None
+    diet_preference: Optional[str] = None
     target_weight_kg: Optional[float] = None
     load_level: Optional[str] = None
     allergy_ids: Optional[List[int]] = None

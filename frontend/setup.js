@@ -133,7 +133,8 @@ form.addEventListener("submit", async (e) => {
     const payload = {
         start_weight_kg, 
         target_weight_kg, 
-        goal_type, 
+        goal_type,
+        diet_preference: document.getElementById('diet_preference').value,
         load_level, 
         program_time, 
         preference,

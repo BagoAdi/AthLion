@@ -40,11 +40,23 @@
         <option value="maintenance">Súlytartás</option>
       </select>
 
+      <label for="diet_preference">Milyen étrendet követsz?</label>
+      <select id="diet_preference" required>
+        <option value="Vegyes">Vegyes (Mindent eszem)</option>
+        <option value="Vegán">Vegán (Csak növényi)</option>
+        <option value="Vegetáriánus">Vegetáriánus</option>
+        <option value="Ketogén">Ketogén / Low Carb</option>
+        <option value="Paleo">Paleo</option>
+        <option value="Bio">Bio / Organikus</option>
+        <option value="Gluténmentes">Gluténmentes</option>
+        <option value="Laktózmentes">Laktózmentes</option>
+      </select>
+
       <label for="load_level">Milyen az aktivitásod?</label>
       <select id="load_level" required>
-        <option value="Könnyű">Könnyű (Irodai munka, heti 1-2 edzés)</option>
-        <option value="Közepes">Közepes (Aktívabb munka, heti 3-5 edzés)</option>
-        <option value="Nehéz">Nehéz (Fizikai munka, heti 5+ edzés)</option>
+        <option value="Könnyű">Könnyű (heti 1-2 edzés)</option>
+        <option value="Közepes">Közepes (heti 3-5 edzés)</option>
+        <option value="Nehéz">Nehéz (heti 5+ edzés)</option>
       </select>
       
       <input type="hidden" id="program_time" value="30-45 perc">

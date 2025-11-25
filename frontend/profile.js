@@ -9,6 +9,7 @@ const startWeightInput = document.getElementById("start_weight_kg");
 const targetWeightInput = document.getElementById("target_weight_kg");
 const goalTypeInput = document.getElementById("goal_type");
 const loadLevelInput = document.getElementById("load_level");
+const dietPrefInput = document.getElementById("diet_preference");
 
 if (!token) {
     window.location.href = "login.html";
@@ -111,6 +112,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         startWeightInput.value = profileData.start_weight_kg;
         targetWeightInput.value = profileData.target_weight_kg;
         goalTypeInput.value = profileData.goal_type;
+        if(profileData.diet_preference) {
+            dietPrefInput.value = profileData.diet_preference;
+        }  
         loadLevelInput.value = profileData.load_level;
 
         // 4. Multiselectek inicializálása a kiválasztott ID-kkal
@@ -150,6 +154,7 @@ form.addEventListener("submit", async (e) => {
         goal_type: goalTypeInput.value,
         target_weight_kg: parseFloat(targetWeightInput.value),
         load_level: loadLevelInput.value,
+        diet_preference: dietPrefInput.value,
         allergy_ids: allergyIds,
         injury_ids: injuryIds,
         condition_ids: conditionIds

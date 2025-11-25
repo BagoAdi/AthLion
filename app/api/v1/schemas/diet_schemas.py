@@ -9,3 +9,4 @@ class DietCalcOut(BaseModel):
     protein: float
     carbs: float
     fat: float
+    current_weight: float

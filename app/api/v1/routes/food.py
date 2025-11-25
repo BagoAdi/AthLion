@@ -1,25 +1,27 @@
-# app/api/v1/routes/foods.py
+# app/api/v1/routes/food.py
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session, joinedload, selectinload
+from sqlalchemy.orm import Session, selectinload
 from sqlalchemy import select
+from datetime import date
+from typing import List, Optional
+
 from app.db.session import SessionLocal
+from app.api.v1.routes.auth import get_current_active_user, get_db
+from app.models.user import User
 from app.models.food_item import FoodItem, FoodDietTypeLink
 from app.models.allergen import Allergen
 from app.models.diet_type import DietType
-from pydantic import BaseModel, Field
-from typing import List, Optional
+from app.models.diet_profile import DietProfile
+from app.models.user_food_log import UserFoodLog
+# FONTOS: Importáljuk a UserAllergy-t a direkt lekérdezéshez
+from app.models.user_allergy import UserAllergy 
+
+from pydantic import BaseModel
+from app.api.v1.schemas.food_check import FoodCheckResponse
 
 router = APIRouter(prefix="/foods", tags=["foods"])
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-# --- Pydantic Sémák a válaszhoz ---
-
+# --- Sémák maradnak ---
 class AllergenOut(BaseModel):
     allergen_id: int
     allergen_name: str
@@ -41,7 +43,7 @@ class FoodItemOut(BaseModel):
     fat_100g: Optional[float]
     
     allergens: List[AllergenOut] = []
-    diet_types: List[DietTypeOut] = [] # Ezt külön töltjük fel
+    diet_types: List[DietTypeOut] = []
 
     class Config:
         from_attributes = True
@@ -52,15 +54,7 @@ def search_foods(
     limit: int = Query(20, gt=0, le=100),
     db: Session = Depends(get_db)
 ):
-    """
-    Ételek keresése a saját adatbázisunkban.
-    """
     search_term = f"%{q.lower()}%"
-    
-    # Szuperhatékony lekérdezés:
-    # 1. Lekéri a FoodItem-et
-    # 2. "selectinload" -> Külön lekérdezéssel, de hatékonyan betölti a kapcsolódó allergéneket
-    # 3. "selectinload" -> Betölti a link-táblát, ÉS a hozzá tartozó diéta típust
     stmt = (
         select(FoodItem)
         .where(FoodItem.food_name.ilike(search_term))
@@ -70,10 +64,8 @@ def search_foods(
         )
         .limit(limit)
     )
-    
     results = db.execute(stmt).scalars().unique().all()
     
-    # Manuálisan összeállítjuk a választ, hogy a @property helyett a szép listát kapjuk
     response_data = []
     for item in results:
         item_data = FoodItemOut.from_orm(item)
@@ -81,3 +73,65 @@ def search_foods(
         response_data.append(item_data)
 
     return response_data
+
+# --- ITT A JAVÍTOTT RÉSZ (CHECK) ---
+
+@router.get("/{food_id}/check", response_model=FoodCheckResponse)
+def check_food_safety(
+    food_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user)
+):
+    warnings = []
+    is_safe = True
+
+    # 1. Étel lekérése (és betöltjük az allergénjeit)
+    food = db.query(FoodItem).options(selectinload(FoodItem.allergens)).filter(FoodItem.food_id == food_id).first()
+    if not food:
+        raise HTTPException(status_code=404, detail="Food not found")
+
+    # 2. ALLERGIA VIZSGÁLAT - A GOLYÓÁLLÓ MÓDSZER
+    # Nem használjuk a `current_user.allergies`-t, mert az dobja az 500-at.
+    # Helyette direkt lekérdezés:
+    user_allergy_records = db.query(UserAllergy).filter(UserAllergy.user_id == current_user.user_id).all()
+    
+    # Kinyerjük az ID-kat egy listába
+    my_allergen_ids = [record.allergen_id for record in user_allergy_records]
+    
+    # Összehasonlítás
+    for food_allergen in food.allergens:
+        if food_allergen.allergen_id in my_allergen_ids:
+            is_safe = False
+            warnings.append(f"VESZÉLY: {food_allergen.allergen_name}-t tartalmazhat!")
+
+    # 3. MAKRÓ VIZSGÁLAT
+    active_profile = db.query(DietProfile).filter(
+        DietProfile.user_id == current_user.user_id, 
+        DietProfile.is_active == 1
+    ).first()
+
+    if active_profile:
+        today_logs = db.query(UserFoodLog, FoodItem).join(FoodItem).filter(
+            UserFoodLog.user_id == current_user.user_id,
+            UserFoodLog.date == date.today()
+        ).all()
+
+        consumed_fat = 0
+        consumed_carbs = 0
+        for log, item in today_logs:
+            ratio = log.quantity_grams / 100.0
+            consumed_fat += (item.fat_100g or 0) * ratio
+            consumed_carbs += (item.carbs_100g or 0) * ratio
+        
+        t_fat = active_profile.fat or 0
+        t_carbs = active_profile.carbs or 0
+        rem_fat = max(0, t_fat - consumed_fat)
+        rem_carbs = max(0, t_carbs - consumed_carbs)
+
+        if (food.fat_100g or 0) > rem_fat and rem_fat > 0:
+            warnings.append(f"Vigyázz: 100g ebből túllépi a maradék zsírkereted ({round(rem_fat)}g)!")
+        
+        if (food.carbs_100g or 0) > rem_carbs and rem_carbs > 0:
+            warnings.append(f"Vigyázz: 100g ebből túllépi a maradék szénhidrátkereted ({round(rem_carbs)}g)!")
+
+    return FoodCheckResponse(is_safe=is_safe, warnings=warnings)

@@ -89,6 +89,85 @@ function initDayNavigator() {
     updateDayView(); // Kezdő nézet beállítása
 }
 
+function initWeightControl() {
+    const wInput = $('#weightInput');
+    const wDec = $('#weightDec');
+    const wInc = $('#weightInc');
+    const wStatus = $('#weightSaveStatus');
+    
+    if (!wInput || !token) return;
+
+    // 1. Jelenlegi súly betöltése indításkor
+    fetch("/api/v1/weight/latest", {
+        headers: { "Authorization": `Bearer ${token}` }
+    })
+    .then(res => res.ok ? res.json() : null)
+    .then(data => {
+        if (data && data.weight_kg) {
+            wInput.value = data.weight_kg;
+        }
+    })
+    .catch(console.error);
+
+    // Segédfüggvény a mentéshez
+    const saveWeight = async (newVal) => {
+        if (!newVal || newVal <= 0) return;
+        
+        wInput.style.opacity = "0.7";
+
+        try {
+            const todayISO = new Date().toISOString().slice(0, 10);
+            
+            const res = await fetch("/api/v1/weight/", {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}` 
+                },
+                body: JSON.stringify({
+                    weight_kg: parseFloat(newVal),
+                    date: todayISO
+                })
+            });
+
+            if (res.ok) {
+                // Visszajelzés és makró frissítés
+                wStatus.style.opacity = '1';
+                setTimeout(() => { wStatus.style.opacity = '0'; }, 2000);
+                
+                // HA létezik a függvény, meghívjuk
+                if (typeof fetchUserGoals === 'function') {
+                    await fetchUserGoals(); 
+                }
+            }
+
+        } catch (err) {
+            console.error(err);
+        } finally {
+            wInput.style.opacity = "1";
+        }
+    };
+
+    // Gombok kezelése
+    wDec.addEventListener('click', () => {
+        let val = parseFloat(wInput.value) || 0;
+        val = Math.max(0, val - 0.5);
+        wInput.value = val.toFixed(1);
+        saveWeight(val);
+    });
+
+    wInc.addEventListener('click', () => {
+        let val = parseFloat(wInput.value) || 0;
+        val += 0.5;
+        wInput.value = val.toFixed(1);
+        saveWeight(val);
+    });
+
+    wInput.addEventListener('change', () => {
+        saveWeight(parseFloat(wInput.value));
+    });
+}
+
 function updateDayView() {
     if (!dayLabel) return;
     
@@ -245,7 +324,7 @@ async function doFoodSearch(isModal = false) {
 /**
  * 4. MODAL JOBB OLDAL KEZELÉSE (Kiválasztás, Preview)
  */
-function selectFoodInModal(item) {
+async function selectFoodInModal(item) {
     currentSelectedFood = item;
 
     // UI váltás: Placeholder elrejtése, Részletek megjelenítése
@@ -258,16 +337,61 @@ function selectFoodInModal(item) {
     // Adatok kiírása
     if(selFoodName) selFoodName.textContent = item.food_name;
     if(selBaseMacros) {
-        // Helper a biztonságos kerekítéshez (ha esetleg null lenne az adat)
         const r = (val) => Math.round(val || 0);
         selBaseMacros.textContent = `${r(item.kcal_100g)}kcal | Feh:${r(item.protein_100g)} SzH:${r(item.carbs_100g)} Zs:${r(item.fat_100g)}`;
     }
     
     // Reset mennyiség 100g-ra
     if(selQuantity) selQuantity.value = 100;
-    
-    // Számolás frissítése
     updatePreviewCalculation();
+
+    // --- ÚJ: BIZTONSÁGI ELLENŐRZÉS ---
+    // Megkeressük (vagy létrehozzuk) a figyelmeztető dobozt
+    let warningBox = document.getElementById('foodWarningBox');
+    if (!warningBox) {
+        warningBox = document.createElement('div');
+        warningBox.id = 'foodWarningBox';
+        warningBox.style.padding = '10px';
+        warningBox.style.marginTop = '15px';
+        warningBox.style.borderRadius = '8px';
+        warningBox.style.fontSize = '13px';
+        warningBox.style.display = 'none'; // Alapból rejtve
+        // Beszúrjuk a gomb elé
+        if (btnAddSelection) btnAddSelection.parentNode.insertBefore(warningBox, btnAddSelection);
+    }
+    
+    // Reseteljük a dobozt
+    warningBox.style.display = 'none';
+    warningBox.innerHTML = '';
+
+    if (token) {
+        try {
+            const res = await fetch(`/api/v1/foods/${item.food_id}/check`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const checkData = await res.json();
+                
+                if (checkData.warnings && checkData.warnings.length > 0) {
+                    // Van figyelmeztetés!
+                    warningBox.style.display = 'block';
+                    
+                    // Ha nem biztonságos (allergia), akkor piros, amúgy sárga
+                    const isDanger = !checkData.is_safe;
+                    warningBox.style.backgroundColor = isDanger ? 'rgba(255, 0, 0, 0.2)' : 'rgba(255, 200, 0, 0.2)';
+                    warningBox.style.border = isDanger ? '1px solid var(--err)' : '1px solid #ffcc00';
+                    warningBox.style.color = isDanger ? '#ffcccc' : '#ffdd99';
+
+                    // Üzenetek felsorolása
+                    warningBox.innerHTML = checkData.warnings.map(w => 
+                        `<div>${isDanger ? '⚠️' : 'ℹ️'} <strong>${w}</strong></div>`
+                    ).join('');
+                }
+            }
+        } catch (err) {
+            console.error("Hiba az étel ellenőrzésekor:", err);
+        }
+    }
 }
 
 function updatePreviewCalculation() {
@@ -362,6 +486,114 @@ async function handleAddSelectionClick() {
         btnAddSelection.textContent = originalBtnText;
         btnAddSelection.disabled = false;
     }
+}
+
+/**
+ * 7. MAKRÓ CÉLOK ÉS SÚLY LEKÉRÉSE
+ */
+async function fetchUserGoals() {
+    if (!token) return;
+
+    try {
+        const res = await fetch("/api/v1/diet/calculate", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            
+            // 1. Súly mező kitöltése (EZ A JAVÍTÁS LÉNYEGE)
+            const wInput = $('#weightInput');
+            if (wInput && data.current_weight) {
+                // Csak akkor írjuk felül, ha a felhasználó épp nem gépel bele
+                if (document.activeElement !== wInput) {
+                    wInput.value = data.current_weight;
+                }
+            }
+
+            // 2. Makrók frissítése
+            targetMacros = {
+                cal: data.calories,
+                p: data.protein,
+                c: data.carbs,
+                f: data.fat
+            };
+            updateMacroDisplays(); 
+        }
+    } catch (err) {
+        console.error("Hiba a célok frissítésekor:", err);
+    }
+}
+
+/**
+ * 8. SÚLY ÁLLÍTÁS (STEPPER)
+ */
+function initWeightControl() {
+    const wInput = $('#weightInput');
+    const wDec = $('#weightDec');
+    const wInc = $('#weightInc');
+    const wStatus = $('#weightSaveStatus');
+    
+    if (!wInput || !token) return;
+
+
+    // 2. Mentés és Frissítés logika
+    const saveWeight = async (newVal) => {
+        if (!newVal || newVal <= 0) return;
+        
+        wInput.style.opacity = "0.7";
+
+        try {
+            const todayISO = new Date().toISOString().slice(0, 10);
+            
+            // Elküldjük az új súlyt
+            const res = await fetch("/api/v1/weight/", {
+                method: "POST",
+                headers: { 
+                    "Content-Type": "application/json", 
+                    "Authorization": `Bearer ${token}` 
+                },
+                body: JSON.stringify({
+                    weight_kg: parseFloat(newVal),
+                    date: todayISO
+                })
+            });
+
+            if (res.ok) {
+                // Siker! Pipa felvillan
+                wStatus.style.opacity = '1';
+                setTimeout(() => { wStatus.style.opacity = '0'; }, 2000);
+                
+                // ITT A LÉNYEG: Azonnal frissítjük a kördiagramokat!
+                await fetchUserGoals(); 
+            }
+
+        } catch (err) {
+            console.error(err);
+        } finally {
+            wInput.style.opacity = "1";
+        }
+    };
+
+    // Gombok eseményei
+    wDec.addEventListener('click', () => {
+        let val = parseFloat(wInput.value) || 0;
+        val = Math.max(0, val - 0.5);
+        wInput.value = val.toFixed(1);
+        saveWeight(val);
+    });
+
+    wInc.addEventListener('click', () => {
+        let val = parseFloat(wInput.value) || 0;
+        val += 0.5;
+        wInput.value = val.toFixed(1);
+        saveWeight(val);
+    });
+
+    wInput.addEventListener('change', () => {
+        saveWeight(parseFloat(wInput.value));
+    });
 }
 
 
@@ -544,9 +776,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if ($('#diet-panel-top')) {
         initDayNavigator();
         initMealTabs();
+        initWeightControl();
         
         if (token) {
-             fetchDailyLog();
+            fetchDailyLog();
+            fetchUserGoals();
         } else {
              renderDailyFoodList();
         }

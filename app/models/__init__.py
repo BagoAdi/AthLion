@@ -25,3 +25,6 @@ from .physical_activity import PhysicalActivity
 from .excercise import Exercise
 
 from .user_food_log import UserFoodLog
+from .user_weight_log import UserWeightLog
+
+

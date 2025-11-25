@@ -61,6 +61,39 @@
 
             <div class="calendar-grid" id="calendarList"></div>
           </section>
+
+          <div class="dashboard-widgets">
+            
+            <section class="card glass recovery-card">
+              <div class="widget-header">
+                <h4>Regeneráció</h4>
+                <p>Izmok pihentségi szintje</p>
+              </div>
+              <div id="recoveryList">
+                <p class="muted small">Tölts fel edzéseket az adatokhoz.</p>
+              </div>
+            </section>
+
+            <section class="card glass stats-card">
+              <div class="widget-header">
+                <h4>Heti Fókusz</h4>
+                <p>Megdolgozott területek</p>
+              </div>
+              <div class="body-map-container">
+                <div class="body-figure">
+                  <div class="bm-part bm-head"></div>
+                  <div class="bm-part bm-torso" id="bm-torso" title="Törzs (Mell/Hát/Has)"></div>
+                  <div class="bm-part bm-arm-l" id="bm-arms" title="Karok/Váll"></div>
+                  <div class="bm-part bm-arm-r"></div> <div class="bm-part bm-leg-l" id="bm-legs" title="Lábak"></div>
+                  <div class="bm-part bm-leg-r"></div>
+                </div>
+              </div>
+              <div class="text-center muted small" id="focusText">
+                Még nincs adat erre a hétre.
+              </div>
+            </section>
+
+          </div>
         </div>
 
         <div id="viewDay" class="view-section view-hidden">
@@ -84,6 +117,9 @@
               <div class="builder-header">
                 <h3>Gyakorlatválasztó</h3>
                 <p class="muted">Húzd be a 3 fő gyakorlatot, majd válassz kiegészítőket.</p>
+                <button id="copyPreviousBtn" class="btn-copy" style="display:none;">
+                  <span>↺</span> Legutóbbi ilyen nap másolása
+                </button>
               </div>
 
               <div class="builder-section">
@@ -91,7 +127,7 @@
                   <button class="split-btn" data-type="push">Push</button>
                   <button class="split-btn" data-type="pull">Pull</button>
                   <button class="split-btn" data-type="legs">Legs</button>
-                  <button class="split-btn" data-type="mixed">Vegyes (Összes)</button>
+                  <button class="split-btn" data-type="mixed">Vegyes</button>
                 </div>
               </div>
 

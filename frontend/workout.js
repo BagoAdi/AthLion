@@ -50,8 +50,7 @@
   let calendarMonth = new Date();
   calendarMonth.setDate(1);
 
-  // ---------- DATE HELPER (JAVÍTOTT!) ----------
-  // Ez volt a hiba forrása. Most már lokális időt használ, nem UTC-t.
+  // ---------- DATE HELPER (TIMEZONE FIX) ----------
   function dateKey(d) {
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -67,11 +66,16 @@
     return `${y}. ${m}. ${day}. (${dn})`;
   }
 
+  function getDaysSinceEpoch(d) {
+    const utc = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+    return Math.floor(utc / (1000 * 60 * 60 * 24));
+  }
+
   function getWeekNumber(d) {
-    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7));
+    const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+    return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
   }
 
   // ---------- VIEW SWITCHING ----------
@@ -97,6 +101,123 @@
         viewCal.style.visibility = "visible";
       }, 50);
     }
+  }
+
+  // ---------- DASHBOARD LOGIKA (HŐTÉRKÉP SZINTEK) ----------
+  function updateDashboard() {
+      // 1. Heti fókusz (Emberke) - Számolás
+      const today = new Date();
+      let focusCounts = { push: 0, pull: 0, legs: 0, mixed: 0 };
+      
+      // Végignézzük a naptárt, és számoljuk az elmúlt 7 napot
+      Object.entries(calendarData).forEach(([k, v]) => {
+          const parts = k.split('-');
+          const logDate = new Date(parts[0], parts[1]-1, parts[2]);
+          
+          // Biztonságos nap különbség
+          const diffTime = Math.abs(today - logDate);
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+          
+          if(diffDays <= 7 && v.mode === 'gym') {
+              let type = v.dayType || 'mixed';
+              if(focusCounts[type] !== undefined) focusCounts[type]++;
+              else focusCounts.mixed++;
+          }
+      });
+
+      // DOM elemek
+      const torso = qs("#bm-torso");
+      const arms = qs("#bm-arms");
+      const legs = qs("#bm-legs");
+      const rArms = qs(".bm-arm-r");
+      const rLegs = qs(".bm-leg-r");
+      
+      // Helper: Szint meghatározása (Kék -> Lila -> Piros)
+      const getLevelClass = (count) => {
+          if (count <= 0) return null;
+          if (count <= 2) return "lvl-1"; // 1-2 edzés (Kék)
+          if (count <= 4) return "lvl-2"; // 3-4 edzés (Lila)
+          return "lvl-3";                 // 5+ edzés (Piros)
+      };
+
+      if(torso && arms && legs) {
+          // Reset - levesszük az összes lvl osztályt
+          [torso, arms, legs, rArms, rLegs].forEach(el => {
+              el.classList.remove("active", "lvl-1", "lvl-2", "lvl-3");
+          });
+          
+          // Felsőtest (Push + Pull + Mixed)
+          let upperCount = focusCounts.push + focusCounts.pull + focusCounts.mixed;
+          if (upperCount > 0) {
+              const cls = getLevelClass(upperCount);
+              torso.classList.add(cls);
+              arms.classList.add(cls);
+              rArms.classList.add(cls);
+          }
+
+          // Alsótest (Legs + Mixed)
+          let lowerCount = focusCounts.legs + focusCounts.mixed;
+          if (lowerCount > 0) {
+              const cls = getLevelClass(lowerCount);
+              legs.classList.add(cls);
+              rLegs.classList.add(cls);
+          }
+          
+          const total = upperCount + focusCounts.legs; // Közelítőleg
+          const txt = qs("#focusText");
+          if(txt) txt.textContent = total > 0 
+             ? `Elmúlt 7 nap: ${total} edzés`
+             : "Nincs edzés az elmúlt héten.";
+      }
+
+      // 2. Recovery (Mikor volt utoljára?)
+      let lastTrain = { push: 99, pull: 99, legs: 99, mixed: 99 };
+      
+      Object.entries(calendarData).forEach(([k, v]) => {
+          if(v.mode === 'gym') {
+              const parts = k.split('-');
+              const logDate = new Date(parts[0], parts[1]-1, parts[2]);
+              const diff = getDaysSinceEpoch(today) - getDaysSinceEpoch(logDate);
+              
+              let type = v.dayType || 'mixed';
+              if(diff >= 0) {
+                  if(lastTrain[type] === undefined) lastTrain[type] = 999;
+                  if(diff < lastTrain[type]) lastTrain[type] = diff;
+              }
+          }
+      });
+
+      const renderBar = (label, days, mixedDays) => {
+          // A pihenőidő a specifikus és a vegyes edzés közül a frissebb
+          const effectiveDays = Math.min(days, mixedDays);
+          
+          let width = "100%";
+          let cls = "rec-high";
+          if (effectiveDays === 0) { width = "10%"; cls = "rec-low"; }      
+          else if (effectiveDays === 1) { width = "40%"; cls = "rec-low"; } 
+          else if (effectiveDays === 2) { width = "70%"; cls = "rec-mid"; } 
+          else { width = "100%"; cls = "rec-high"; }                        
+          
+          return `
+            <div class="recovery-item">
+              <div class="recovery-label">
+                <span>${label}</span>
+                <span>${effectiveDays > 30 ? '>30' : effectiveDays} napja</span>
+              </div>
+              <div class="rec-bar-bg">
+                <div class="rec-bar-fill ${cls}" style="width: ${width}"></div>
+              </div>
+            </div>
+          `;
+      };
+
+      const recList = qs("#recoveryList");
+      if(recList) {
+          recList.innerHTML = 
+            renderBar("Push (Mell/Váll/Tri)", lastTrain.push, lastTrain.mixed) +
+            renderBar("Pull (Hát/Bi)", lastTrain.pull, lastTrain.mixed) +
+            renderBar("Legs (Láb)", lastTrain.legs, lastTrain.mixed);
+      }
   }
 
   // ---------- POPUP KEZELÉS ----------
@@ -151,7 +272,12 @@
   async function fetchUserWorkouts() {
     try {
       const res = await fetch("/api/v1/workouts/", { headers: authHeaders() });
-      if (res.ok) processServerLogs(await res.json());
+      if (res.ok) {
+        const logs = await res.json();
+        processServerLogs(logs);
+        // Frissítjük a dashboardot az adatok betöltése után!
+        updateDashboard();
+      }
     } catch (err) {}
   }
 
@@ -181,6 +307,7 @@
       };
     });
     renderCalendar();
+    updateDashboard(); 
   }
 
   function normalizeLoadLevel(raw) {
@@ -256,7 +383,7 @@
     return eIndex <= uIndex; 
   }
 
-  // ---------- SMART ALGORITMUS ----------
+  // ---------- SMART ALGORITMUS & ROTÁCIÓ ----------
   function calculateDayType(dateObj) {
     const schedule = TRAINING_SCHEDULES[loadLevel] || [1, 3, 5];
     let dayOfWeek = dateObj.getDay();
@@ -265,10 +392,14 @@
     if (!schedule.includes(dateObj.getDay()) && !(dateObj.getDay()===0 && schedule.includes(7))) {
        return null; 
     }
-    const weekNum = getWeekNumber(dateObj);
-    const scheduleIndex = schedule.indexOf(dayOfWeek === 7 ? 0 : dayOfWeek); 
-    const globalIndex = (weekNum * schedule.length) + (scheduleIndex !== -1 ? scheduleIndex : 0);
-    return WORKOUT_SPLIT[globalIndex % 3];
+    const refDate = new Date(2024, 0, 1); 
+    const daysPassed = getDaysSinceEpoch(dateObj) - getDaysSinceEpoch(refDate);
+    const weeksPassed = Math.floor(daysPassed / 7);
+    
+    const scheduleIndex = schedule.indexOf(dayOfWeek === 7 ? 0 : dayOfWeek);
+    const globalIndex = (weeksPassed * schedule.length) + scheduleIndex;
+    
+    return WORKOUT_SPLIT[Math.abs(globalIndex) % 3];
   }
 
   function getSmartRecommendations(pool) {
@@ -309,7 +440,7 @@
     if (workoutMode !== "gym") return [];
     
     const userDiff = DIFFICULTY_MAP[loadLevel] || "intermediate";
-    let filtered = EXERCISES.filter(ex => levelAllowed(userDiff, ex.level)); // SZINT SZŰRÉS VISSZATÉRT
+    let filtered = EXERCISES.filter(ex => levelAllowed(userDiff, ex.level));
 
     if (selectedSplit === "mixed") return filtered;
 
@@ -392,6 +523,34 @@
      updateLockButton();
   }
 
+  function copyPreviousWorkout() {
+      if(!selectedSplit || selectedSplit === 'mixed') {
+          alert("Előbb válassz egy konkrét típust (Push, Pull vagy Legs)!");
+          return;
+      }
+      const dates = Object.keys(calendarData).sort().reverse();
+      let found = null;
+      for (const d of dates) {
+          const entry = calendarData[d];
+          if (entry.mode === 'gym' && entry.dayType === selectedSplit && d !== selectedDateKey) {
+              found = entry;
+              break;
+          }
+      }
+      if (found) {
+          mainExercises = [...(found.main || [])];
+          extraExercises = [...(found.extra || [])];
+          renderDropzones();
+          updateLockButton();
+          const btn = qs("#copyPreviousBtn");
+          const orig = btn.innerHTML;
+          btn.innerHTML = "✅ Másolva!";
+          setTimeout(() => btn.innerHTML = orig, 2000);
+      } else {
+          alert(`Nem találtam korábbi ${selectedSplit.toUpperCase()} edzést.`);
+      }
+  }
+
   // ---------- NAPTÁR RENDER ----------
   function renderCalendar() {
     const grid = qs("#calendarList");
@@ -400,7 +559,7 @@
     grid.innerHTML = "";
 
     const today = new Date();
-    const todayKey = dateKey(today); // Most már helyes, pl. "2025-11-25"
+    const todayKey = dateKey(today);
 
     const y = calendarMonth.getFullYear();
     const m = calendarMonth.getMonth();
@@ -425,7 +584,7 @@
       const dayData = calendarData[key];
       
       let classes = ["cal-day"];
-      if (key === todayKey) classes.push("today"); // MAI NAP JELÖLÉS
+      if (key === todayKey) classes.push("today");
       if (dayData) classes.push("has-data");
       
       let dayOfWeek = d.getDay(); 
@@ -445,8 +604,6 @@
     selectedDateKey = key;
     const data = calendarData[key];
     
-    // Dátum objektum létrehozása manuálisan a sztringből a biztonság kedvéért
-    // Hogy elkerüljük az újabb UTC/Local csúszást
     const parts = key.split('-');
     const d = new Date(parts[0], parts[1] - 1, parts[2]); 
 
@@ -477,6 +634,8 @@
       qs("#modeCardio").classList.remove("active");
       
       updateSplitSelectorUI(); 
+      qs("#copyPreviousBtn").style.display = (selectedSplit !== 'mixed') ? 'inline-flex' : 'none';
+      
       switchView("day");
     }
   }
@@ -531,6 +690,7 @@
         dayLocked = true;
         updateLockButton();
         renderCalendar(); 
+        updateDashboard(); 
     });
   }
 
@@ -549,6 +709,7 @@
     qs("#calendarNext")?.addEventListener("click", () => { handleMonthChange(1); });
     qs("#closePopupBtn")?.addEventListener("click", hideSummaryPopup);
     qs("#dayPopup")?.addEventListener("click", (e) => { if(e.target === qs("#dayPopup")) hideSummaryPopup(); });
+    qs("#copyPreviousBtn")?.addEventListener("click", copyPreviousWorkout);
 
     renderCalendar();
     initLockButton();

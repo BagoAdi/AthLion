@@ -1,14 +1,14 @@
 # app/api/v1/routes/setup.py
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, date
 
 from app.models.user import User
 from app.models.start_state import StartState
 from app.models.diet_profile import DietProfile
 from app.models.training_profile import TrainingProfile
 from app.api.v1.routes.auth import get_current_active_user, get_db
- 
+from app.models.user_weight_log import UserWeightLog
 from app.api.v1.schemas.setup_schemas import SetupIn, SetupOut, ProfileOut, ProfileUpdate
 from app.models.user_allergy import UserAllergy
 from app.models.user_condition import UserCondition
@@ -163,35 +163,44 @@ def update_active_profile(
     if not start_state:
         raise HTTPException(status_code=404, detail="Active StartState not found.")
 
-    # ... az update_active_profile függvény fejlécében ...
     try:
         update_data = payload.dict(exclude_unset=True)
         
-        # 3. Frissítés (csak ami nem None)
-        # Ezek a StartState táblát frissítik
+        # --- 1. START STATE FRISSÍTÉSE ---
+        
         if "target_weight_kg" in update_data:
             start_state.target_weight_kg = update_data["target_weight_kg"]
         
+        # SÚLYKÖVETÉS JAVÍTÁSA:
         if "start_weight_kg" in update_data:
-            start_state.start_weight_kg = update_data["start_weight_kg"]
+            new_weight = update_data["start_weight_kg"]
+            # 1. Frissítjük a StartState-et
+            start_state.start_weight_kg = new_weight
+            
+            # 2. ÉS beszúrunk egy új naplóbejegyzést a mai napra,
+            # hogy a rendszer azonnal ezt tekintse az aktuális súlynak a számításoknál.
+            new_log = UserWeightLog(
+                user_id=current_user.user_id,
+                weight_kg=new_weight,
+                date=date.today()
+            )
+            db.add(new_log)
 
         if "goal_type" in update_data:
             start_state.goal_type = update_data["goal_type"]
             
         db.add(start_state)
             
-        # Ez a TrainingProfile táblát frissíti
+        # --- 2. TRAINING PROFILE FRISSÍTÉSE ---
         if "load_level" in update_data:
             active_training_profile.load_level = update_data["load_level"]
             db.add(active_training_profile)
 
-        # --- ÚJ RÉSZ: Egészségügyi adatok frissítése ---
+        # --- 3. EGÉSZSÉGÜGYI ADATOK FRISSÍTÉSE ---
 
         # Allergiák
         if "allergy_ids" in update_data:
-            # Régi törlése
             db.query(UserAllergy).filter(UserAllergy.user_id == current_user.user_id).delete()
-            # Újak hozzáadása
             for aid in update_data["allergy_ids"]:
                 db.add(UserAllergy(user_id=current_user.user_id, allergen_id=aid, severity=1))
 
@@ -213,7 +222,6 @@ def update_active_profile(
             for mid in update_data["medication_ids"]:
                 db.add(UserMedication(user_id=current_user.user_id, medication_id=mid))
 
-    
         db.commit()
         return SetupOut(status="success")
         

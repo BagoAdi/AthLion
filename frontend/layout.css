@@ -93,7 +93,7 @@
 .mode-btn.active { box-shadow: 0 0 0 1px rgba(62,142,222,0.7), 0 10px 26px rgba(0,0,0,0.7); transform: translateY(-1px); }
 
 .exercise-pool { display: flex; flex-wrap: wrap; gap: 10px; padding: 12px 14px; max-height: 160px; overflow-y: auto; border-radius: 18px; background: radial-gradient(circle at 0 0, rgba(62,142,222,0.12), rgba(7,10,15,0.9)); border: 1px solid rgba(62,142,222,0.25); box-shadow: 0 14px 40px rgba(0,0,0,0.35); }
-.exercise-pill { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.16); background: radial-gradient(circle at 0 0, rgba(255,255,255,0.22), rgba(16,16,24,0.85)); backdrop-filter: blur(16px) saturate(150%); font-size: 13px; cursor: grab; user-select: none; white-space: nowrap; transition: transform 0.16s var(--transition), box-shadow 0.16s var(--transition), border-color 0.16s var(--transition), background 0.16s var(--transition); box-shadow: 0 6px 20px rgba(0,0,0,0.45); }
+
 .exercise-pill span.tag { font-size: 11px; opacity: 0.7; }
 .exercise-pill:hover { transform: translateY(-1px) scale(1.03); border-color: rgba(255,255,255,0.3); box-shadow: 0 10px 26px rgba(0,0,0,0.6); }
 .exercise-pill.locked { opacity: 0.6; cursor: default; box-shadow: none; }
@@ -454,6 +454,132 @@ input[type=number] { -webkit-appearance: textfield; -moz-appearance: textfield; 
 .builder-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 @media(max-width:768px){ .builder-two-col{ grid-template-columns: 1fr; } }
 
+
+/* --- INFO TOOLTIP (Smart Algo Magyarázat) --- */
+.info-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  font-style: normal;
+  cursor: help;
+  margin-left: 8px;
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.2s;
+}
+
+.info-icon:hover {
+  background: var(--gold-1);
+  color: #fff;
+  border-color: var(--gold-1);
+}
+
+/* Maga a buborék */
+.info-icon::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  width: 220px;
+  padding: 10px 12px;
+  background: rgba(15, 20, 30, 0.95);
+  border: 1px solid var(--glass-stroke);
+  border-radius: 12px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 400;
+  text-align: center;
+  line-height: 1.4;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+  z-index: 100;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  backdrop-filter: blur(10px);
+}
+
+/* Hoverkor megjelenik */
+.info-icon:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-10px);
+}
+
+
+/* ÚJ: Split választó gombok (Push/Pull/Legs/Vegyes) */
+.split-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  padding-bottom: 4px; /* Görgetősáv hely */
+}
+
+.split-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-stroke);
+  color: var(--muted);
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.split-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.split-btn.active {
+  background: var(--gold-1);
+  color: #05080c;
+  border-color: var(--gold-1);
+  box-shadow: 0 4px 12px rgba(62, 142, 222, 0.3);
+}
+
+/* ÚJ: Exercise Pill Metadata (Visszahoztuk!) */
+.exercise-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 13px;
+  cursor: grab;
+  user-select: none;
+  white-space: nowrap;
+  margin-bottom: 4px; /* Biztos ami biztos */
+}
+
+.exercise-pill .tag {
+  font-size: 10px;
+  opacity: 0.7;
+  padding-left: 6px;
+  border-left: 1px solid rgba(255,255,255,0.2);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.exercise-pill:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--gold-1);
+  transform: translateY(-1px);
+}
 
 /* --- HÓNAP VÁLTÁS ANIMÁCIÓK --- */
 

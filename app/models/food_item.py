@@ -30,6 +30,7 @@ class FoodItem(Base):
 
     food_id = Column(Integer, primary_key=True, index=True)
     food_name = Column(String(255), nullable=False, index=True)
+    food_category = Column(String(50), nullable=True, index=True)
     
     # Makrók / 100g
     kcal_100g = Column(Float, nullable=True)

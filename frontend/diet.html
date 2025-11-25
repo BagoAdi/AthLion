@@ -40,9 +40,7 @@
   
   <main class="page">
     <section class="panel" id="diet">
-      <div class="card glass hero">
-        <h1 id="dietTitle">Étrend kezelő</h1>
-      </div>
+      
 
       <div class="panel-inner" id="diet-panel-top">
         
@@ -123,12 +121,22 @@
             <p id="macroMsg" style="text-align:center; min-height: 1.2em;"></p>
         </section>
         <section class="card glass" id="mealSelectorCard">
-          <h3 style="margin-top:0; text-align: center;">Étkezés hozzáadása</h3>
+          <h3 style="margin-top:0; text-align: center;">Mit ettél ma?</h3>
+          
           <div class="meal-tabs" id="mealTabs">
             <button class="meal-tab" data-meal="breakfast">Reggeli</button>
             <button class="meal-tab" data-meal="lunch">Ebéd</button>
             <button class="meal-tab" data-meal="dinner">Vacsora</button>
             <button class="meal-tab" data-meal="snacks">Nasi</button>
+          </div>
+
+          <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 20px 0;">
+
+          <div style="text-align: center;">
+             <p class="muted small" style="margin-bottom: 10px;">Nincs ötleted? Kérj segítséget!</p>
+             <button class="btn" id="btnOpenAiModal" style="background: linear-gradient(135deg, var(--gold-1), var(--gold-2)); color: #000; font-weight: 800; width: 100%;">
+                🤖 AI Étel Ajánló
+             </button>
           </div>
         </section>
       </div>
@@ -203,6 +211,45 @@
       </div>
     </div>
   </div>
+
+  <div class="modal-overlay" id="aiChoiceModal" style="display: none; z-index: 1000;">
+    <div class="modal-content glass" style="max-width: 800px; text-align: center; padding: 40px;">
+      
+      <div class="modal-header-row" style="justify-content: center; position: relative; margin-bottom: 30px;">
+        <h3 style="margin: 0; font-size: 1.5em; color: var(--gold-1);">Mit szeretnél enni?</h3>
+        <button class="modal-close-btn" id="closeAiModal" style="position: absolute; right: -10px; top: -10px;">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width: 28px; height: 28px;"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+
+      <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+        
+        <button class="btn ai-meal-btn" data-meal="breakfast" style="flex: 1; min-width: 140px; height: 130px; font-size: 1.2em; display:flex; flex-direction:column; align-items:center; justify-content:center; gap: 10px; background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; border: none; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3); transition: transform 0.2s;">
+          <span style="font-size: 3em;">🍳</span>
+          <span style="font-weight: 800;">Reggeli</span>
+        </button>
+
+        <button class="btn ai-meal-btn" data-meal="lunch" style="flex: 1; min-width: 140px; height: 130px; font-size: 1.2em; display:flex; flex-direction:column; align-items:center; justify-content:center; gap: 10px; background: linear-gradient(135deg, #FF6347, #CD853F); color: #fff; border: none; box-shadow: 0 4px 15px rgba(255, 99, 71, 0.3); transition: transform 0.2s;">
+          <span style="font-size: 3em;">🍗</span>
+          <span style="font-weight: 800;">Ebéd</span>
+        </button>
+
+        <button class="btn ai-meal-btn" data-meal="dinner" style="flex: 1; min-width: 140px; height: 130px; font-size: 1.2em; display:flex; flex-direction:column; align-items:center; justify-content:center; gap: 10px; background: linear-gradient(135deg, #32CD32, #20B2AA); color: #fff; border: none; box-shadow: 0 4px 15px rgba(50, 205, 50, 0.3); transition: transform 0.2s;">
+          <span style="font-size: 3em;">🥗</span>
+          <span style="font-weight: 800;">Vacsora</span>
+        </button>
+
+        <button class="btn ai-meal-btn" data-meal="snacks" style="flex: 1; min-width: 140px; height: 130px; font-size: 1.2em; display:flex; flex-direction:column; align-items:center; justify-content:center; gap: 10px; background: linear-gradient(135deg, #FF69B4, #9370DB); color: #fff; border: none; box-shadow: 0 4px 15px rgba(255, 105, 180, 0.3); transition: transform 0.2s;">
+          <span style="font-size: 3em;">🍎</span>
+          <span style="font-weight: 800;">Nasi</span>
+        </button>
+
+      </div>
+      <p class="muted small" style="margin-top: 30px; opacity: 0.7;">Válassz egy kategóriát, és az AI összeállít egy fogást a céljaidhoz.</p>
+
+    </div>
+  </div>
+  
 
   <script src="script.js"></script>
   <script src="diet.js"></script>

@@ -1,121 +1,151 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy.orm import Session
-from datetime import date
+# app/api/v1/routes/food_log.py
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session, joinedload
+from datetime import date 
 from typing import List
 
+# Modellek és Adatbázis
 from app.db.session import SessionLocal
-from app.api.v1.deps import get_current_user
+from app.api.v1.deps import get_current_active_user, get_db
 from app.models.user import User
 from app.models.user_food_log import UserFoodLog
 from app.models.food_item import FoodItem
-from app.api.v1.schemas.food_log import FoodLogEntryIn, FoodLogEntryOut
+
+# Pydantic sémák
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/food_log", tags=["food_log"])
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# --- SÉMÁK ---
+class FoodLogCreate(BaseModel):
+    food_id: int
+    meal_type: str  # 'breakfast', 'lunch', 'dinner', 'snacks'
+    quantity_grams: float
+    date: date
 
-@router.post("/", response_model=FoodLogEntryOut, status_code=status.HTTP_201_CREATED)
-def add_food_to_log(
-    payload: FoodLogEntryIn,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Étel hozzáadása a felhasználó napi fogyasztási naplójához."""
+class FoodLogOut(BaseModel):
+    log_id: int
+    food_id: int
+    food_name: str
+    meal_type: str
+    quantity_grams: float
+    kcal_100g: float
+    protein_100g: float
+    carbs_100g: float
+    fat_100g: float
     
-    food_item = db.query(FoodItem).filter(FoodItem.food_id == payload.food_id).first()
-    if not food_item:
-        raise HTTPException(status_code=404, detail="Food item not found")
+    class Config:
+        from_attributes = True
 
-    new_entry = UserFoodLog(
-        user_id=current_user.user_id,
-        food_id=payload.food_id,
-        date=payload.date,
-        meal_type=payload.meal_type,
-        quantity_grams=payload.quantity_grams,
-    )
-    
-    try:
-        db.add(new_entry)
-        db.commit()
-        db.refresh(new_entry)
-        
-        # Válasz összeállítása az FoodLogEntryOut séma szerint, a FoodItem adatokkal
-        return FoodLogEntryOut(
-            log_id=new_entry.log_id,
-            date=new_entry.date,
-            meal_type=new_entry.meal_type,
-            quantity_grams=new_entry.quantity_grams,
-            food_name=food_item.food_name,
-            kcal_100g=food_item.kcal_100g or 0,
-            protein_100g=food_item.protein_100g or 0,
-            carbs_100g=food_item.carbs_100g or 0,
-            fat_100g=food_item.fat_100g or 0
-        )
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=500, detail=f"Internal server error: {e}")
+# --- VÉGPONTOK ---
 
-@router.get("/", response_model=List[FoodLogEntryOut])
-def get_daily_food_log(
+@router.get("/", response_model=List[FoodLogOut])
+def get_daily_log(
     date_str: str = Query(..., description="Dátum YYYY-MM-DD formátumban"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
 ):
-    """Visszaadja a felhasználó adott napi étel logját."""
     try:
         target_date = date.fromisoformat(date_str)
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
-        
-    logs = (
-        db.query(UserFoodLog, FoodItem)
-        .join(FoodItem)
-        .filter(
-            UserFoodLog.user_id == current_user.user_id,
-            UserFoodLog.date == target_date
-        )
-        .all()
+        target_date = date.today()
+
+    logs = db.query(UserFoodLog).options(joinedload(UserFoodLog.food_item)).filter(
+        UserFoodLog.user_id == current_user.user_id,
+        UserFoodLog.date == target_date
+    ).all()
+
+    results = []
+    for log in logs:
+        if log.food_item:
+            results.append({
+                "log_id": log.log_id,
+                "food_id": log.food_id,
+                "food_name": log.food_item.food_name,
+                "meal_type": log.meal_type,
+                "quantity_grams": log.quantity_grams,
+                "kcal_100g": log.food_item.kcal_100g or 0,
+                "protein_100g": log.food_item.protein_100g or 0,
+                "carbs_100g": log.food_item.carbs_100g or 0,
+                "fat_100g": log.food_item.fat_100g or 0
+            })
+    return results
+
+@router.post("/", response_model=FoodLogOut)
+def add_food_log(
+    log_in: FoodLogCreate,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    food = db.query(FoodItem).get(log_in.food_id)
+    if not food:
+        raise HTTPException(status_code=404, detail="Étel nem található")
+
+    new_log = UserFoodLog(
+        user_id=current_user.user_id,
+        food_id=log_in.food_id,
+        meal_type=log_in.meal_type,
+        quantity_grams=log_in.quantity_grams,
+        date=log_in.date
     )
     
-    response = []
-    for log, food_item in logs:
-        response.append(FoodLogEntryOut(
-            log_id=log.log_id,
-            date=log.date,
-            meal_type=log.meal_type,
-            quantity_grams=log.quantity_grams,
-            food_name=food_item.food_name,
-            kcal_100g=food_item.kcal_100g or 0,
-            protein_100g=food_item.protein_100g or 0,
-            carbs_100g=food_item.carbs_100g or 0,
-            fat_100g=food_item.fat_100g or 0
-        ))
-        
-    return response
-
-@router.delete("/{log_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_food_log_entry(
-    log_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Töröl egy étel bejegyzést a naplóból."""
+    db.add(new_log)
+    db.commit()
+    db.refresh(new_log)
     
-    # Megkeressük a bejegyzést, és ellenőrizzük, hogy a bejelentkezett felhasználóé-e
+    return {
+        "log_id": new_log.log_id,
+        "food_id": food.food_id,
+        "food_name": food.food_name,
+        "meal_type": new_log.meal_type,
+        "quantity_grams": new_log.quantity_grams,
+        "kcal_100g": food.kcal_100g or 0,
+        "protein_100g": food.protein_100g or 0,
+        "carbs_100g": food.carbs_100g or 0,
+        "fat_100g": food.fat_100g or 0
+    }
+
+@router.delete("/{log_id}")
+def delete_food_log(
+    log_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
     log_entry = db.query(UserFoodLog).filter(
         UserFoodLog.log_id == log_id,
         UserFoodLog.user_id == current_user.user_id
     ).first()
 
     if not log_entry:
-        raise HTTPException(status_code=404, detail="Log entry not found")
+        raise HTTPException(status_code=404, detail="Bejegyzés nem található")
 
     db.delete(log_entry)
     db.commit()
     
-    return None
+    return {"msg": "Sikeresen törölve"}
+
+# --- ITT VOLT A HIBA: Explicit Query paraméterek kellenek! ---
+@router.delete("/meal")
+def delete_meal_group(
+    date_str: str = Query(...), # <--- FONTOS: Query(...)
+    meal_type: str = Query(...), # <--- FONTOS: Query(...)
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """
+    CSOPORTOS TÖRLÉS
+    """
+    try:
+        target_date = date.fromisoformat(date_str)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Hibás dátum formátum")
+
+    deleted_count = db.query(UserFoodLog).filter(
+        UserFoodLog.user_id == current_user.user_id,
+        UserFoodLog.date == target_date,
+        UserFoodLog.meal_type == meal_type
+    ).delete(synchronize_session=False)
+
+    db.commit()
+    
+    return {"msg": f"Törölve: {deleted_count} tétel."}

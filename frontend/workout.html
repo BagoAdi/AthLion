@@ -31,121 +31,104 @@
     <div class="nav-auth-group">
         <a href="profile.html" class="ghost" id="navProfile">Profil</a>
         <button class="lang" id="langToggle">HU/EN</button> 
-        
         <span class="welcome" id="welcomeText" style="display:none"></span>
-        
         <a href="register.html" class="ghost" id="navRegister">Regisztráció</a>
         <a href="login.html" class="ghost" id="navSignin">Bejelentkezés</a>
-
         <button class="ghost" id="navLogout" style="display:none">Kijelentkezés</button>
     </div>
   </header>
+
   <main class="page">
     <section class="panel" id="workout">
-      <div class="card glass hero">
-        <h1 id="workoutTitle">Edzésterv-összeállító</h1>
-        <p id="workoutSubtitle">Fogd-és-vidd gyakorlatsorrend, heti bontás.</p>
+      
+      <div class="card glass hero" style="margin-bottom: 22px;">
+        <h1 id="workoutTitle">Edzésterv & Naptár</h1>
+        <p id="workoutSubtitle">Tervezd meg a heted, kövesd a fejlődésed.</p>
       </div>
 
-      <div class="panel-inner">
-        <section class="card glass workout-builder">
-          <!-- 1) MÓDVÁLASZTÓ -->
-          <div class="builder-mode">
-            <h3>Mit edzettél ma?</h3>
-            <p class="muted small">
-              Először válaszd ki, hogy kardióztál vagy edzőteremben edzettél.
-            </p>
-            <div class="mode-buttons">
-              <button id="modeCardio" class="btn mode-btn">Kardió</button>
-              <button id="modeGym" class="btn mode-btn">Edzőtermi edzés</button>
-            </div>
-            <p class="muted small" id="dayTypeLabel" style="margin-top:8px;"></p>
-          </div>
-
-          <!-- 2) EDZŐTERMI BUILDER (GYM) -->
-          <div id="gymBuilder" class="builder-body" style="display:none;">
-            <div class="builder-header">
-              <h3>Gyakorlatválasztó</h3>
-              <p class="muted">
-                Válaszd ki a napot a naptárban, majd húzd be először a
-                <strong>3 fő gyakorlatot</strong>. Ezek alapján ajánlunk még
-                <strong>+3 kiegészítőt</strong>, végül zárd le a napot.
-              </p>
-            </div>
-
-            <div class="builder-section">
-              <h4>Elérhető gyakorlatok</h4>
-              <div class="exercise-pool" id="exercisePool"></div>
-            </div>
-
-            <div class="builder-section">
-              <h4>Fő edzések (max. 3)</h4>
-              <div class="dropzone" id="mainExercises">
-                <span class="dropzone-placeholder">
-                  Húzd ide a fő gyakorlatokat
-                </span>
+      <div class="view-container">
+        
+        <div id="viewCalendar" class="view-section active">
+          <section class="card glass calendar-card full-width-calendar">
+            <div class="calendar-header-row">
+              <h3>Edzésnapló</h3>
+              <div class="calendar-controls">
+                <button class="cal-nav" id="calendarPrev">‹</button>
+                <div class="calendar-month" id="calendarMonthLabel">–</div>
+                <button class="cal-nav" id="calendarNext">›</button>
               </div>
             </div>
 
-            <div class="builder-section">
-              <h4>Kiegészítő ajánlott edzések (max. 3)</h4>
-              <div class="dropzone" id="extraExercises">
-                <span class="dropzone-placeholder">
-                  Ha megvan a 3 fő gyakorlat, automatikusan ajánlunk +3-at ide.
-                </span>
+            <div class="calendar-weekdays">
+              <span>H</span><span>K</span><span>Sze</span>
+              <span>Cs</span><span>P</span><span>Szo</span><span>V</span>
+            </div>
+
+            <div class="calendar-grid" id="calendarList"></div>
+          </section>
+        </div>
+
+        <div id="viewDay" class="view-section hidden">
+          <section class="card glass workout-builder">
+            
+            <div class="builder-top-nav">
+              <button class="ghost small" id="backToCalendarBtn">
+                ← Vissza a naptárhoz
+              </button>
+              <div class="calendar-current" style="margin:0">
+                <span id="calendarCurrentLabel">–</span>
               </div>
             </div>
-          </div>
 
-          <!-- 3) KARDIÓ BUILDER -->
-          <div id="cardioBuilder" class="builder-body" style="display:none;">
-            <div class="builder-header">
-              <h3>Kardió aktivitás</h3>
-              <p class="muted">
-                Válaszd ki, milyen kardiót végeztél a mai napon.
-              </p>
+            <div class="builder-mode">
+              <h3>Mit edzettél ma?</h3>
+              <div class="mode-buttons">
+                <button id="modeCardio" class="btn mode-btn">Kardió</button>
+                <button id="modeGym" class="btn mode-btn">Edzőtermi edzés</button>
+              </div>
+              <p class="muted small" id="dayTypeLabel" style="margin-top:8px; min-height:20px;"></p>
             </div>
-            <div class="builder-section">
-              <h4>Elérhető kardió tevékenységek</h4>
-              <div class="cardio-list" id="cardioList">
-                <p class="muted small">Válassz ki egy kardió aktivitást a listából.</p>
+
+            <div id="gymBuilder" class="builder-body" style="display:none;">
+              <div class="builder-header">
+                <h3>Gyakorlatválasztó</h3>
+                <p class="muted">Húzd be a 3 fő gyakorlatot, majd válassz kiegészítőket.</p>
+              </div>
+
+              <div class="builder-section">
+                <h4>Elérhető gyakorlatok</h4>
+                <div class="exercise-pool" id="exercisePool"></div>
+              </div>
+
+              <div class="builder-two-col">
+                <div class="builder-section">
+                  <h4>Fő edzések (max. 3)</h4>
+                  <div class="dropzone" id="mainExercises"></div>
+                </div>
+                <div class="builder-section">
+                  <h4>Kiegészítők (max. 3)</h4>
+                  <div class="dropzone" id="extraExercises"></div>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- 4) KÖZÖS LOCK GOMB -->
-          <button class="btn" id="lockDayBtn" disabled>Nap lezárása</button>
-          <p class="muted small" id="lockInfo">
-            Válassz ki legalább 3 gyakorlatot a nap lezárásához.
-          </p>
-        </section>
+            <div id="cardioBuilder" class="builder-body" style="display:none;">
+              <div class="builder-header">
+                <h3>Kardió aktivitás</h3>
+              </div>
+              <div class="builder-section">
+                <div class="cardio-list" id="cardioList"></div>
+              </div>
+            </div>
 
+            <div class="builder-footer">
+              <button class="btn" id="lockDayBtn" disabled>Nap lezárása</button>
+              <p class="muted small" id="lockInfo">Válassz aktivitást a mentéshez.</p>
+            </div>
 
-        <section class="card glass plan calendar-card">
-          <h3>Naptár</h3>
-          <p class="muted">
-            Válassz egy napot. A lezárt napok visszatekinthetők,
-            az új napokra pedig összeállíthatod az edzést.
-          </p>
+          </section>
+        </div>
 
-          <div class="calendar-current">
-            Aktuálisan kiválasztott nap:
-            <span id="calendarCurrentLabel">–</span>
-          </div>
-
-          <div class="calendar-header">
-            <button class="cal-nav" id="calendarPrev">‹</button>
-            <div class="calendar-month" id="calendarMonthLabel">–</div>
-            <button class="cal-nav" id="calendarNext">›</button>
-          </div>
-
-          <div class="calendar-weekdays">
-            <span>H</span><span>K</span><span>Sze</span>
-            <span>Cs</span><span>P</span><span>Szo</span><span>V</span>
-          </div>
-
-          <div class="calendar-grid calendar-list" id="calendarList"></div>
-        </section>
       </div>
     </section>
   </main>

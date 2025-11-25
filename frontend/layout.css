@@ -474,3 +474,67 @@ input[type=number] { -webkit-appearance: textfield; -moz-appearance: textfield; 
   from { opacity: 0; transform: translateX(-30px); }
   to { opacity: 1; transform: translateX(0); }
 }
+
+/* --- TOAST NOTIFICATION (Saját értesítő ablak) --- */
+.custom-toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: rgba(20, 20, 20, 0.95);
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 8px;
+    border-left: 4px solid var(--gold-1); /* Arany csík a szélén */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 9999;
+    
+    /* Animációk */
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.custom-toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.custom-toast.error {
+    border-left-color: #ff4d4d; /* Piros csík hiba esetén */
+}
+
+/* --- MINIMÁL GÖRGŐ (SCROLLBAR) --- */
+
+/* WebKit böngészők (Chrome, Edge, Safari) */
+::-webkit-scrollbar {
+    width: 8px; /* Vékony szélesség */
+    height: 8px; /* Vízszintes görgőnél is */
+}
+
+::-webkit-scrollbar-track {
+    background: transparent; /* A háttér átlátszó, hogy ne zavarjon */
+}
+
+::-webkit-scrollbar-thumb {
+    background: #555; /* A minimál szürke szín */
+    border-radius: 4px; /* Lekerekített végek */
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #777; /* Kicsit világosabb interakciónál */
+}
+
+/* Firefox támogatás */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #555 transparent;
+}
+
+/* frontend/layout.css */
+.ai-meal-btn:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4) !important;
+    cursor: pointer;
+}

@@ -41,6 +41,31 @@ const prevP = $('#prevP');
 const prevC = $('#prevC');
 const prevF = $('#prevF');
 
+// --- TOAST SEGÉDFÜGGVÉNY ---
+function showToast(message, type = 'success') {
+    // Létrehozzuk az elemet
+    const toast = document.createElement('div');
+    toast.className = `custom-toast ${type}`;
+    toast.textContent = message;
+    
+    // Hozzáadjuk az oldalhoz
+    document.body.appendChild(toast);
+
+    // Megjelenítjük (kis késleltetéssel az animáció miatt)
+    requestAnimationFrame(() => {
+        toast.classList.add('show');
+    });
+
+    // 3 másodperc múlva eltüntetjük
+    setTimeout(() => {
+        toast.classList.remove('show');
+        // Miután halványodott, töröljük a DOM-ból
+        setTimeout(() => {
+            document.body.removeChild(toast);
+        }, 300);
+    }, 3000);
+}
+
 /**
  * Saját megerősítő ablak Promise alapon.
  * Használat: if (await showConfirm()) { ... }
@@ -785,4 +810,83 @@ document.addEventListener('DOMContentLoaded', () => {
              renderDailyFoodList();
         }
     }
+});
+
+// =================================================
+// ÚJ AI AJÁNLÓ FLOW (Gomb -> Választó -> Szerkesztő)
+// =================================================
+
+const btnOpenAiModal = document.getElementById('btnOpenAiModal');
+const aiChoiceModal = document.getElementById('aiChoiceModal');
+const closeAiModal = document.getElementById('closeAiModal');
+const aiMealButtons = document.querySelectorAll('.ai-meal-btn');
+
+// 1. Választó ablak megnyitása
+if (btnOpenAiModal) {
+    btnOpenAiModal.addEventListener('click', () => {
+        aiChoiceModal.style.display = 'grid';
+    });
+}
+
+// 2. Választó ablak bezárása
+if (closeAiModal) {
+    closeAiModal.addEventListener('click', () => {
+        aiChoiceModal.style.display = 'none';
+    });
+}
+
+// 3. A 4 gomb kezelése
+aiMealButtons.forEach(btn => {
+    btn.addEventListener('click', async () => {
+        const mealType = btn.dataset.meal; // 'breakfast', 'lunch'...
+        
+        // Bezárjuk a választót, és jelzünk, hogy dolgozunk
+        aiChoiceModal.style.display = 'none';
+        showToast("⏳ Keresem a legjobb ajánlatot...", "info");
+
+        try {
+            if (!token) throw new Error("Jelentkezz be!");
+
+            const res = await fetch(`/api/v1/diet/recommendation/suggest/${mealType}`, {
+                headers: { "Authorization": `Bearer ${token}` }
+            });
+
+            if (!res.ok) throw new Error("Nem találtam megfelelő ételt.");
+            const suggestion = await res.json();
+
+            // SIKER!
+            // Most "becsapjuk" a rendszert, és úgy teszünk, mintha a user kézzel választotta volna ki ezt az ételt.
+            
+            // 1. Beállítjuk az aktív étkezés típust a háttérben
+            activeMealType = mealType;
+            
+            // 2. Megnyitjuk a SZERKESZTŐ modalt (foodSearchModal)
+            const foodModal = document.getElementById('foodSearchModal');
+            if (foodModal) {
+                foodModal.style.display = 'grid';
+                
+                // Frissítjük a címet
+                const labels = { breakfast: 'Reggeli', lunch: 'Ebéd', dinner: 'Vacsora', snacks: 'Nasi' };
+                const modalTitle = document.getElementById('modalTitle');
+                if(modalTitle) modalTitle.textContent = labels[mealType] + " (Ajánlat)";
+
+                // 3. Betöltjük az adatokat (ez a meglévő függvényed!)
+                selectFoodInModal(suggestion); 
+
+                // 4. Felülírjuk a mennyiséget az ajánlottra
+                const qtyInput = document.getElementById('selQuantity');
+                if (qtyInput) {
+                    qtyInput.value = suggestion.suggested_quantity;
+                    // Trigger input event, hogy a makrók frissüljenek
+                    qtyInput.dispatchEvent(new Event('input'));
+                }
+                
+                showToast(`💡 Megvan! Mit szólsz ehhez: ${suggestion.food_name}?`);
+            }
+
+        } catch (err) {
+            console.error(err);
+            showToast("❌ Nem sikerült ajánlani. Próbáld újra!", "error");
+        }
+    });
 });

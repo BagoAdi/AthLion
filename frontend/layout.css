@@ -56,6 +56,13 @@
 .panel-inner { display: grid; grid-template-columns: 1.1fr 1fr; gap: 22px; }
 .card { border-radius: var(--radius-lg); }
 
+/* --- UTILITY (FONTOS: Ez marad a Popupoknak!) --- */
+.hidden {
+  display: none !important;
+  opacity: 0;
+  pointer-events: none;
+}
+
 /* --- HERO & WIDGETS (Home) --- */
 .hero { display: grid; place-items: center; text-align: center; padding: 32px; }
 .hero h1 { font-size: clamp(28px, 4.5vw, 46px); margin: 0 0 10px; line-height: 1.1; }
@@ -172,7 +179,7 @@
 }
 .daily-food-list .kcal { color: var(--gold-2); font-weight: 800; font-size: 13px; }
 
-/* --- MODAL --- */
+/* --- MODAL (ÁLTALÁNOS & POPUP) --- */
 .modal-overlay {
   position: fixed; inset: 0;
   background: rgba(0, 0, 0, 0.8);
@@ -180,7 +187,13 @@
   z-index: 100;
   display: grid; place-items: center;
   padding: 20px;
+  transition: opacity 0.2s;
 }
+/* Ez a kulcs a működéshez: ha hidden, akkor display: none */
+.modal-overlay.hidden {
+  display: none !important;
+}
+
 .modal-content.modal-wide {
   max-width: 900px; width: 100%;
   height: 75vh;
@@ -315,7 +328,7 @@ input[type=number] { -webkit-appearance: textfield; -moz-appearance: textfield; 
   min-height: 700px;
 }
 
-/* Nézet animációk */
+/* Nézet animációk - FIX: Nem használunk 'hidden' class-t, mert az display:none */
 .view-section {
   width: 100%;
   transition: opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1), transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
@@ -326,11 +339,14 @@ input[type=number] { -webkit-appearance: textfield; -moz-appearance: textfield; 
   opacity: 1; transform: translateX(0) scale(1);
   pointer-events: all; position: relative;
 }
-.view-section.hidden {
+
+/* ÚJ CLASS A REJTETT NÉZETEKNEK (NEM '.hidden') */
+.view-section.view-hidden {
   opacity: 0; pointer-events: none; position: absolute; visibility: hidden;
 }
-#viewCalendar.hidden { transform: translateX(-40px) scale(0.95); }
-#viewDay.hidden { transform: translateX(40px) scale(0.95); }
+
+#viewCalendar.view-hidden { transform: translateX(-40px) scale(0.95); }
+#viewDay.view-hidden { transform: translateX(40px) scale(0.95); }
 
 /* --- CALENDAR CARD --- */
 .calendar-card { padding: 32px; }
@@ -358,9 +374,9 @@ input[type=number] { -webkit-appearance: textfield; -moz-appearance: textfield; 
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  /* Kisebb sorköz, mert a körök is kisebbek lettek */
-  row-gap: 16px; 
-  column-gap: 0; /* Nem kell gap, mert margin auto-val középre rakjuk a köröket */
+  /* Megnövelt térköz a nagyobb naptárért (32px) */
+  row-gap: 32px; 
+  column-gap: 0; 
 }
 
 .calendar-weekdays {
@@ -370,11 +386,11 @@ input[type=number] { -webkit-appearance: textfield; -moz-appearance: textfield; 
 }
 .calendar-weekdays span { font-size: 12px; font-weight: 700; color: var(--muted); opacity: 0.6; text-transform: uppercase; }
 
-/* A NAPOK (Körök) - UPDATE: Kisebb, fix méret */
+/* A NAPOK (Körök) - UPDATE: Nagyobb méret (48px) */
 .cal-day {
-  width: 40px;        /* Fix szélesség */
-  height: 40px;       /* Fix magasság */
-  margin: 0 auto;     /* Középre igazítás a cellában */
+  width: 48px;        
+  height: 48px;       
+  margin: 0 auto;     
   border-radius: 50%;
   
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -385,7 +401,6 @@ input[type=number] { -webkit-appearance: textfield; -moz-appearance: textfield; 
   border: 1px solid transparent;
   color: var(--muted);
   
-  /* Helyet hagyunk felül a vonalnak */
   margin-top: 10px; 
 }
 
@@ -400,11 +415,8 @@ input[type=number] { -webkit-appearance: textfield; -moz-appearance: textfield; 
 .cal-day::before {
   content: "";
   position: absolute;
-  top: -8px; /* Kicsit közelebb */
-  /* Mivel a .cal-day most kisebb (40px) és középen van,
-     a vonalnak szélesebbnek kell lennie, hogy összeérjen a szomszédokkal.
-     Ez trükkös: a rács cella kb 14% széles. A vonalnak ki kell lógnia. */
-  width: 300%; /* Elég szélesre vesszük */
+  top: -16px; /* Kicsit feljebb a nagyobb gap miatt */
+  width: 300%; 
   left: -100%; 
   height: 1px;
   background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04) 20%, rgba(255,255,255,0.04) 80%, transparent);
@@ -433,7 +445,7 @@ input[type=number] { -webkit-appearance: textfield; -moz-appearance: textfield; 
 /* Pötty */
 .dot-indicator {
   width: 4px; height: 4px; background: var(--gold-2); border-radius: 50%;
-  position: absolute; bottom: 5px; opacity: 0; transform: scale(0); transition: 0.3s;
+  position: absolute; bottom: 6px; opacity: 0; transform: scale(0); transition: 0.3s;
 }
 .cal-day.has-data .dot-indicator { opacity: 1; transform: scale(1); }
 

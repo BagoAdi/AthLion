@@ -39,61 +39,93 @@
   let calendarMonth = new Date();
   calendarMonth.setDate(1);
 
-  // ---------- VIEW SWITCHING ----------
+  // ---------- VIEW SWITCHING (JAVÍTOTT ANIMÁCIÓ) ----------
   function switchView(viewName) {
     const viewCal = qs("#viewCalendar");
     const viewDay = qs("#viewDay");
     if (!viewCal || !viewDay) return;
 
     if (viewName === "day") {
-      viewCal.classList.add("hidden");
+      // Használjunk view-hidden-t, hogy ne display:none legyen (így tud animálni)
+      viewCal.classList.add("view-hidden");
       viewCal.classList.remove("active");
+      
       setTimeout(() => {
-        viewDay.classList.remove("hidden");
+        viewDay.classList.remove("view-hidden");
         viewDay.classList.add("active");
         viewDay.style.visibility = "visible";
       }, 50);
     } else {
-      viewDay.classList.add("hidden");
+      viewDay.classList.add("view-hidden");
       viewDay.classList.remove("active");
+      
       setTimeout(() => {
-        viewCal.classList.remove("hidden");
+        viewCal.classList.remove("view-hidden");
         viewCal.classList.add("active");
         viewCal.style.visibility = "visible";
       }, 50);
     }
   }
 
-  // ---------- ANIMÁLT HÓNAP VÁLTÁS (ÚJ) ----------
+  // ---------- POPUP KEZELÉS ----------
+  function showSummaryPopup(data, dateObj) {
+      const popup = qs("#dayPopup");
+      const title = qs("#popupDate");
+      const body = qs("#popupBody");
+      
+      title.textContent = prettyDate(dateObj);
+      body.innerHTML = "";
+      
+      if (data.mode === 'gym') {
+          const type = data.dayType ? data.dayType.toUpperCase() + " nap" : "Edzőterem";
+          let html = `<div style="text-align:center; margin-bottom:15px;"><span style="background:rgba(255,255,255,0.1); padding:4px 12px; border-radius:12px; font-size:13px; color:var(--muted);">${type}</span></div>`;
+          
+          html += `<ul style="padding-left: 0; list-style:none;">`;
+          if(data.main && data.main.length) {
+              html += `<li style="font-weight:700; color:var(--gold-1); margin-top:10px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:4px; margin-bottom:6px;">Fő gyakorlatok</li>`;
+              data.main.forEach(ex => html += `<li style="padding:4px 0; color:#fff;">• ${ex.name}</li>`);
+          }
+          if(data.extra && data.extra.length) {
+               html += `<li style="font-weight:700; color:var(--muted); margin-top:16px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:4px; margin-bottom:6px;">Kiegészítők</li>`;
+              data.extra.forEach(ex => html += `<li style="padding:4px 0; color:var(--muted);">• ${ex.name}</li>`);
+          }
+          html += `</ul>`;
+          body.innerHTML = html;
+      } else {
+          const name = data.cardio ? data.cardio.name : "Ismeretlen aktivitás";
+          const met = data.cardio && data.cardio.met ? data.cardio.met + " MET" : "";
+          body.innerHTML = `
+            <div style="text-align:center; padding: 20px 0;">
+               <div style="font-size: 48px; margin-bottom:10px;">🏃</div>
+               <h4 style="margin: 0 0 6px 0; color: #fff; font-size: 20px;">${name}</h4>
+               <p class="muted" style="font-size:14px;">${met}</p>
+            </div>
+          `;
+      }
+      popup.classList.remove("hidden"); // Itt marad a 'hidden' (display:none)
+  }
+
+  function hideSummaryPopup() {
+      qs("#dayPopup")?.classList.add("hidden");
+  }
+
+  // ---------- ANIMÁLT HÓNAP VÁLTÁS ----------
   function handleMonthChange(direction) {
     const grid = qs("#calendarList");
     if (!grid) return;
-
-    // 1. Kifelé animáció
     const exitClass = direction === 1 ? 'anim-slide-out-left' : 'anim-slide-out-right';
     grid.classList.add(exitClass);
-
-    // Várjuk meg, amíg kimegy (200ms kb)
     setTimeout(() => {
-      // 2. Dátum léptetés és Render
       calendarMonth.setMonth(calendarMonth.getMonth() + direction);
       renderCalendar();
-
-      // 3. Kifelé class levétele, Befelé class rátétele
       grid.classList.remove(exitClass);
-      
       const enterClass = direction === 1 ? 'anim-slide-in-right' : 'anim-slide-in-left';
       grid.classList.add(enterClass);
-
-      // 4. Takarítás az animáció végén
-      setTimeout(() => {
-        grid.classList.remove(enterClass);
-      }, 300);
-
+      setTimeout(() => { grid.classList.remove(enterClass); }, 300);
     }, 200);
   }
 
-  // ---------- BACKEND KOMM ----------
+  // ---------- BACKEND & HELPER ----------
   async function fetchUserWorkouts() {
     try {
       const res = await fetch("/api/v1/workouts/", { headers: authHeaders() });
@@ -101,7 +133,7 @@
         const logs = await res.json();
         processServerLogs(logs);
       }
-    } catch (err) { console.error("Edzésnapló hiba:", err); }
+    } catch (err) { console.error(err); }
   }
 
   async function saveWorkoutToServer(dateStr, mode, dayType, mainIds, extraIds, cardioId) {
@@ -114,9 +146,8 @@
         method: "POST", headers: authHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(payload)
       });
-      if (!res.ok) throw new Error("Mentés sikertelen");
-      console.log("Edzés mentve!");
-    } catch (err) { alert("Hiba: Nem sikerült menteni a szerverre."); }
+      if (!res.ok) throw new Error("Hiba");
+    } catch (err) { alert("Mentési hiba!"); }
   }
 
   function processServerLogs(logs) {
@@ -134,7 +165,6 @@
     renderCalendar();
   }
 
-  // ---------- HELPER ----------
   function dateKey(d) { return d.toISOString().slice(0, 10); }
   function prettyDate(d) {
     const dn = d.toLocaleDateString("hu-HU", { weekday: "long" });
@@ -161,16 +191,14 @@
         if (data.training_profiles && data.training_profiles.length > 0) {
            const active = data.training_profiles.find(p => p.is_active === 1) || data.training_profiles[0];
            apiData = active.load_level;
-        } else if (data.training_profile) {
-           apiData = data.training_profile.load_level;
-        }
+        } else if (data.training_profile) { apiData = data.training_profile.load_level; }
         if (apiData) loadLevel = normalizeLoadLevel(apiData);
       }
     } catch (e) {}
     localStorage.setItem("athlion_load_level", loadLevel);
   }
 
-  // ---------- ADATOK BETÖLTÉSE ----------
+  // ---------- ADAT BETÖLTÉS ----------
   async function loadGymExercises() {
     try {
       const res = await fetch("/api/v1/exercises/", { headers: authHeaders() });
@@ -228,7 +256,6 @@
     pool.innerHTML = "";
     const list = filterExercisesForContext();
     if(!list.length) pool.innerHTML = `<p class="muted small">Nincs elérhető gyakorlat.</p>`;
-    
     list.forEach(ex => {
       const pill = document.createElement("div");
       pill.className = "exercise-pill";
@@ -244,18 +271,15 @@
     const mainZone = qs("#mainExercises");
     const extraZone = qs("#extraExercises");
     if (!mainZone) return;
-    
-    const renderZone = (zone, list, type) => {
+    const renderZone = (zone, list) => {
         zone.innerHTML = "";
-        if (!list.length) {
-            zone.innerHTML = `<span class="dropzone-placeholder">${type === 'main' ? 'Fő gyakorlatok' : 'Kiegészítők'}</span>`;
-        }
+        if (!list.length) zone.innerHTML = `<span class="dropzone-placeholder">Húzd ide a gyakorlatot</span>`;
         list.forEach(ex => {
             const pill = document.createElement("div");
             pill.className = "exercise-pill" + (dayLocked ? " locked" : "");
             pill.textContent = ex.name;
             if(!dayLocked) pill.addEventListener("click", () => {
-                if(type === 'main') mainExercises = mainExercises.filter(e => e.id !== ex.id);
+                if(zone.id === 'mainExercises') mainExercises = mainExercises.filter(e => e.id !== ex.id);
                 else extraExercises = extraExercises.filter(e => e.id !== ex.id);
                 renderDropzones();
                 updateLockButton();
@@ -263,9 +287,8 @@
             zone.appendChild(pill);
         });
     };
-    renderZone(mainZone, mainExercises, 'main');
-    renderZone(extraZone, extraExercises, 'extra');
-    
+    renderZone(mainZone, mainExercises);
+    renderZone(extraZone, extraExercises);
     [mainZone, extraZone].forEach(zone => {
        zone.ondragover = e => { e.preventDefault(); zone.classList.add("active"); };
        zone.ondragleave = () => zone.classList.remove("active");
@@ -287,13 +310,11 @@
      renderDropzones();
   }
 
-  // ---------- NAPTÁR ----------
+  // ---------- NAPTÁR RENDER ----------
   function renderCalendar() {
     const grid = qs("#calendarList");
     const monthLabel = qs("#calendarMonthLabel");
     if (!grid) return;
-    // Megjegyzés: itt nem töröljük azonnal az innerHTML-t, ha animáció van,
-    // de a legegyszerűbb, ha hagyjuk, és az animáció a konténeren fut.
     grid.innerHTML = "";
 
     const y = calendarMonth.getFullYear();
@@ -328,7 +349,6 @@
       
       let dayOfWeek = d.getDay(); 
       if (dayOfWeek === 0) dayOfWeek = 7; 
-      
       if (schedule.includes(d.getDay()) || (d.getDay()===0 && schedule.includes(7))) {
           classes.push("scheduled-train-day");
       }
@@ -336,6 +356,7 @@
       cell.className = classes.join(" ");
       cell.innerHTML = `<span>${dayNum}</span><div class="dot-indicator"></div>`;
 
+      // KATTINTÁS LOGIKA
       cell.addEventListener("click", () => {
         selectCalendarDay(key);
       });
@@ -348,47 +369,38 @@
     selectedDateKey = key;
     const data = calendarData[key];
     const d = new Date(key);
-
+    
     const label = qs("#calendarCurrentLabel");
     if(label) label.textContent = prettyDate(d);
 
     if (data) {
-      dayLocked = true;
-      if (data.mode === "gym") {
-        mainExercises = [...(data.main || [])];
-        extraExercises = [...(data.extra || [])];
-        currentDayType = data.dayType;
-        setWorkoutMode("gym");
-      } else {
-        cardioSelection = data.cardio;
-        setWorkoutMode("cardio");
-      }
+      // Popup
+      showSummaryPopup(data, d);
     } else {
+      // ÚJ NAP -> BUILDER
       dayLocked = false;
       mainExercises = [];
       extraExercises = [];
       cardioSelection = null;
-      
       qs("#gymBuilder").style.display = "none";
       qs("#cardioBuilder").style.display = "none";
       qs("#modeGym").classList.remove("active");
       qs("#modeCardio").classList.remove("active");
       qs("#dayTypeLabel").textContent = "Válassz edzésformát!";
+      
+      switchView("day");
     }
-    switchView("day");
   }
 
   function setWorkoutMode(mode) {
     workoutMode = mode;
     const btnGym = qs("#modeGym");
     const btnCardio = qs("#modeCardio");
-    
     if(mode === "gym") {
         btnGym.classList.add("active");
         btnCardio.classList.remove("active");
         qs("#gymBuilder").style.display = "block";
         qs("#cardioBuilder").style.display = "none";
-        
         if (!currentDayType) {
             const gymDays = Object.values(calendarData).filter(d => d.mode === "gym").length;
             currentDayType = WORKOUT_SPLIT[gymDays % 3];
@@ -447,14 +459,17 @@
     qs("#modeGym")?.addEventListener("click", () => !dayLocked && setWorkoutMode("gym"));
     qs("#modeCardio")?.addEventListener("click", () => !dayLocked && setWorkoutMode("cardio"));
     
+    // Gomb az visszalépéshez
     qs("#backToCalendarBtn")?.addEventListener("click", () => {
         switchView("calendar");
         renderCalendar(); 
     });
 
-    // ITT A LÉNYEG: handleMonthChange hívása a sima render helyett
     qs("#calendarPrev")?.addEventListener("click", () => { handleMonthChange(-1); });
     qs("#calendarNext")?.addEventListener("click", () => { handleMonthChange(1); });
+    
+    qs("#closePopupBtn")?.addEventListener("click", hideSummaryPopup);
+    qs("#dayPopup")?.addEventListener("click", (e) => { if(e.target === qs("#dayPopup")) hideSummaryPopup(); });
 
     renderCalendar();
     initLockButton();

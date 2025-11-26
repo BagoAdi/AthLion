@@ -105,26 +105,6 @@ def add_food_log(
         "fat_100g": food.fat_100g or 0
     }
 
-@router.delete("/{log_id}")
-def delete_food_log(
-    log_id: int,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
-):
-    log_entry = db.query(UserFoodLog).filter(
-        UserFoodLog.log_id == log_id,
-        UserFoodLog.user_id == current_user.user_id
-    ).first()
-
-    if not log_entry:
-        raise HTTPException(status_code=404, detail="Bejegyzés nem található")
-
-    db.delete(log_entry)
-    db.commit()
-    
-    return {"msg": "Sikeresen törölve"}
-
-# --- ITT VOLT A HIBA: Explicit Query paraméterek kellenek! ---
 @router.delete("/meal")
 def delete_meal_group(
     date_str: str = Query(...), # <--- FONTOS: Query(...)
@@ -149,3 +129,22 @@ def delete_meal_group(
     db.commit()
     
     return {"msg": f"Törölve: {deleted_count} tétel."}
+
+@router.delete("/{log_id}")
+def delete_food_log(
+    log_id: int,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    log_entry = db.query(UserFoodLog).filter(
+        UserFoodLog.log_id == log_id,
+        UserFoodLog.user_id == current_user.user_id
+    ).first()
+
+    if not log_entry:
+        raise HTTPException(status_code=404, detail="Bejegyzés nem található")
+
+    db.delete(log_entry)
+    db.commit()
+    
+    return {"msg": "Sikeresen törölve"}

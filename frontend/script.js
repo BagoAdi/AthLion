@@ -49,14 +49,14 @@ function t() {
     setText('workoutTitle', S.workoutTitle);
     setText('workoutSubtitle', S.workoutSubtitle);
 
-    // Nyelvváltó gomb
+    /*// Nyelvváltó gomb
     const langBtn = $('#langToggle');
     if (langBtn) {
         langBtn.textContent = (LANG === 'hu') ? 'Magyar' : 'English';
-    }
+    }*/
 }
 
-// Nyelvváltó gomb eseménykezelője
+/*// Nyelvváltó gomb eseménykezelője
 const langToggleBtn = $('#langToggle');
 if (langToggleBtn) {
     langToggleBtn.addEventListener('click', () => {
@@ -64,7 +64,8 @@ if (langToggleBtn) {
         t();
         langToggleBtn.blur();
     });
-}
+}*/
+
 
 // =================================================
 // INDEX.HTML - BMI KALKULÁTOR

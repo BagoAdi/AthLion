@@ -29,6 +29,8 @@ from .user_weight_log import UserWeightLog
 
 from .workout_log import WorkoutLog
 
+from .user_water_log import UserWaterLog
+
 
 
 

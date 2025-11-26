@@ -80,6 +80,32 @@
               Mentve! ✓
           </div>
 
+          <hr style="margin: 20px 0; border: 0; border-top: 1px solid rgba(255,255,255,0.1);">
+
+          <h3 style="margin-top:0; text-align: center;">Víz (ml)</h3>
+
+          <div class="weight-control-row" style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+            <button class="ghost ghost-icon" id="waterDec" title="-2.5 dl">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" style="width: 20px; height: 20px;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12h-15" />
+              </svg>
+            </button>
+            
+            <div style="position: relative; width: 80px; text-align: center;">
+                <span id="waterValueDisplay" style="font-weight: 800; font-size: 1.2em; color: #00BFFF;">0</span>
+            </div>
+
+            <button class="ghost ghost-icon" id="waterInc" title="+2.5 dl">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="3" stroke="currentColor" style="width: 20px; height: 20px;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </button>
+          </div>
+
+          <div style="width: 80%; margin: 10px auto 0 auto; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden;">
+              <div id="waterProgressBarSmall" style="width: 0%; height: 100%; background: #00BFFF; transition: width 0.3s;"></div>
+          </div>
+
         </section>
 
         <section class="card glass" id="macroChartCard">

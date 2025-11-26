@@ -10,3 +10,4 @@ class DietCalcOut(BaseModel):
     carbs: float
     fat: float
     current_weight: float
+    burned_calories: float = 0.0

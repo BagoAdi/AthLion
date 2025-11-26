@@ -7,9 +7,9 @@ class User(Base):
 
     user_id = Column(Integer, primary_key=True, index=True)
     user_name = Column(String(100), nullable=False)
-    date_of_birth = Column(Date, nullable=False)
-    height_cm = Column(Float, nullable=False)
-    sex = Column(String(10), nullable=False)
+    date_of_birth = Column(Date, nullable=True)
+    height_cm = Column(Float, nullable=True)
+    sex = Column(String(10), nullable=True)
     email = Column(String(100), unique=True, index=True, nullable=False)
     password_hash = Column(String(256), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

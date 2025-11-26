@@ -35,6 +35,18 @@ def create_initial_setup(
         raise HTTPException(status_code=400, detail="User setup already completed.")
 
     try:
+        # 0. LÉPÉS: A hiányzó User adatok pótlása!
+        # A frontendről érkező payload-ból kiszedjük az adatokat és frissítjük a user-t.
+        # Feltételezzük, hogy a SetupIn sémában ezeket elnevezted (pl. birth_date, height, sex)
+        if hasattr(payload, 'birth_date'):
+            current_user.date_of_birth = payload.birth_date
+        if hasattr(payload, 'height'): # vagy height_cm, attól függ mi a neve a sémában
+            current_user.height_cm = payload.height
+        if hasattr(payload, 'gender'): # vagy sex
+            current_user.sex = payload.gender
+            
+        db.add(current_user) # Jelezzük, hogy a user változott
+        
         # 1. Új StartState létrehozása
         new_start_state = StartState(
             start_weight_kg=payload.start_weight_kg,

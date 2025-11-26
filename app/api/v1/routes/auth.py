@@ -10,6 +10,7 @@ from passlib.context import CryptContext
 from passlib.hash import bcrypt_sha256
 from app.db.session import SessionLocal
 from app.models.user import User
+from app.schemas import UserCreate, UserOut
 
 from passlib.hash import pbkdf2_sha256
 
@@ -96,27 +97,24 @@ class UserOut(BaseModel):
 
 # ======== Routes ========
 @router.post("/register", response_model=TokenOut)
-def register(payload: RegisterIn, db: Session = Depends(get_db)):
+def register(user_in: UserCreate, db: Session = Depends(get_db)):
     # --- A te kódod változatlanul ---
     try:
         # 1) Dupla email védelem
-        if db.query(User).filter(User.email == payload.email).first():
+        if db.query(User).filter(User.email == user_in.email).first():
             raise HTTPException(status_code=400, detail="Email already registered")
 
         # 2) Jelszó hash (stabil CryptContext-tel)
         try:
-            password_hash = pbkdf2_sha256.hash(payload.password)
+            password_hash = pbkdf2_sha256.hash(user_in.password)
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Password hashing failed: {e}")
 
         # 3) Insert
         u = User(
-            email=payload.email,
-            user_name=payload.user_name,
-            password_hash=password_hash,
-            date_of_birth=payload.date_of_birth,
-            height_cm=payload.height_cm,
-            sex=payload.sex
+            email=user_in.email,
+            user_name=user_in.user_name,
+            password_hash=password_hash   
         )
         db.add(u)
         db.commit()

@@ -212,3 +212,61 @@ input:focus, select:focus {
   background: #111114;
   font-weight: 600;
 }
+
+/* --- AthLion Form Stílus (Illeszd a base.css végére) --- */
+
+/* Input mezők sötétítése és formázása */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="date"], /* Születési dátumhoz */
+input[type="number"],
+select {
+    background-color: #1e1e1e !important;  /* Sötét szürke háttér */
+    color: #ffffff !important;             /* Fehér szöveg */
+    border: 1px solid #444;                /* Diszkrét keret */
+    border-radius: 8px;                    /* Lekerekített sarkok */
+    padding: 12px 15px;                    /* Kényelmes belső térköz */
+    width: 100%;                           /* Teljes szélesség */
+    box-sizing: border-box;                /* Hogy a keret ne nyomja szét az oldalt */
+    font-size: 16px;
+    margin-bottom: 15px;                   /* Távolság a mezők között */
+    
+    /* Ez a varázslat: közli a böngészővel (pl. Chrome), hogy a felugró 
+       naptár is SÖTÉT legyen, ne vakító fehér */
+    color-scheme: dark; 
+}
+
+/* Ha belekattintasz (Fókusz), világítson neon zölden */
+input:focus, select:focus {
+    outline: none;
+    border-color: #00ff85;
+    box-shadow: 0 0 8px rgba(0, 255, 133, 0.4); /* Neon ragyogás */
+}
+
+/* A dátumválasztó kis naptár ikonját fehérre színezi, hogy látsszon a sötéten */
+::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    cursor: pointer;
+}
+
+/* A mezők feletti feliratok (pl. "Email cím") legyenek világosak */
+label {
+    color: #cccccc;
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+/* A gomb stílusa (ha még nincs beállítva) */
+button[type="submit"] {
+    width: 100%;
+    padding: 12px;
+    background-color: #00ff85;
+    color: #000;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 10px;
+}

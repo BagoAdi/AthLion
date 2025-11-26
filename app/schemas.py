@@ -1,13 +1,13 @@
 # app/schemas.py
 from pydantic import BaseModel, EmailStr, Field
 from datetime import date, datetime
-from typing import Optional, List, Any, Dict # <--- Itt a List, ami eddig hiányzott!
+from typing import Optional, List, Any, Dict
 
 # Config beállítás, hogy a Pydantic olvassa az SQL modelleket
 class Config:
     from_attributes = True
 
-# ======== Start State (Előrehoztuk, mert hivatkozhat rá más) ========
+# ======== Start State ========
 
 class StartStateIn(BaseModel):
     """Séma a 'Start State' létrehozásához."""
@@ -46,42 +46,60 @@ class TrainingProfileOut(BaseModel):
     load_level: str
     program_time: str
     preference: Optional[str]
-    is_active: int # Fontos: ezt használjuk a frontend szűréshez
+    is_active: int 
     
     class Config(Config):
         pass
 
-# ======== User ========
+# ======== User (FRISSÍTVE AZ ÚJ LOGIKÁHOZ) ========
+
+class UserCreate(BaseModel):
+    """
+    Regisztrációhoz: Csak a szentháromság.
+    A többi adatot (kor, súly, magasság) majd a Setup oldalon adjuk hozzá.
+    """
+    user_name: str
+    email: EmailStr
+    password: str
+
+class UserUpdate(BaseModel):
+    """
+    Profil frissítéshez (pl. a Setup oldalról).
+    Itt már beállíthatjuk a születésnapot és a nemet is.
+    """
+    user_name: Optional[str] = None
+    height_cm: Optional[float] = None
+    date_of_birth: Optional[date] = None # Hozzáadva a Setuphoz
+    sex: Optional[str] = None           # Hozzáadva a Setuphoz
 
 class UserOut(BaseModel):
-    """Séma a felhasználói adatok biztonságos visszaadására (jelszó nélkül)."""
+    """
+    Felhasználó adatainak visszaadása.
+    Fontos: A fizikai adatok (birth, height, sex) opcionálisak,
+    mert regisztráció után közvetlenül még nincsenek kitöltve!
+    """
     user_id: int
     email: EmailStr
     user_name: str
-    date_of_birth: date
-    height_cm: float
-    sex: str
     created_at: datetime
 
-    # ITT A JAVÍTÁS: List[TrainingProfileOut] és többes szám!
+    # Ezeket átállítottuk Optional-ra, hogy ne dobjon hibát regisztrációkor
+    date_of_birth: Optional[date] = None
+    height_cm: Optional[float] = None
+    sex: Optional[str] = None
+
     training_profiles: List[TrainingProfileOut] = [] 
     
     class Config(Config):
         pass
 
-class UserUpdate(BaseModel):
-    """Séma a felhasználói profil frissítéséhez (minden mező opcionális)."""
-    user_name: Optional[str] = None
-    height_cm: Optional[float] = None
-    
 # ========= Workout Log ========
-
 
 class WorkoutLogBase(BaseModel):
     date: date
     mode: str
     day_type: Optional[str] = None
-    data: Dict[str, Any] # A JSON tartalom
+    data: Dict[str, Any] 
 
 class WorkoutLogCreate(WorkoutLogBase):
     pass

@@ -166,7 +166,7 @@ form.addEventListener("submit", async (e) => {
         localStorage.setItem("athlion_load_level", load_level);
         
         setTimeout(() => {
-            window.location.href = "index.html";
+            window.location.href = "dashboard.html";
         }, 1500);
 
     } catch (err) {

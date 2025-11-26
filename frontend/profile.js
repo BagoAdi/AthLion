@@ -179,7 +179,7 @@ form.addEventListener("submit", async (e) => {
         localStorage.setItem("user_name", userNameInput.value);
 
         setTimeout(() => {
-            window.location.href = "index.html";
+            window.location.href = "dashboard.html";
         }, 1200);
 
     } catch (err) {

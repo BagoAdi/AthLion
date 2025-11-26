@@ -46,7 +46,7 @@ form.addEventListener("submit", async (e) => {
     // üdvözléshez elmentjük az emailt
     localStorage.setItem("user_email", email);
 
-    setTimeout(() => (window.location.href = "index.html"), 1200);
+    setTimeout(() => (window.location.href = "dashboard.html"), 1200);
 
 
   } catch (err) {

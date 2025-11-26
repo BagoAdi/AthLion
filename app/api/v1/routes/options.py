@@ -1,34 +1,51 @@
-from fastapi import APIRouter, Depends
+# app/api/v1/routes/options.py
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
-from pydantic import BaseModel
+import logging
 
-from app.api.v1.routes.auth import get_db
-from app.models.allergen import Allergen
-from app.models.injury import Injury
-from app.models.health_condition import HealthCondition
-from app.models.medication import Medication
+from app.api.v1.deps import get_db
+
+# --- LOGGOLÁS ---
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# --- MODELLEK ---
+try:
+    from app.models.allergen import Allergen
+    from app.models.injury import Injury
+    from app.models.health_condition import HealthCondition
+except ImportError as e:
+    logger.error(f"IMPORT HIBA: {e}")
 
 router = APIRouter(prefix="/options", tags=["options"])
 
-# Egyszerű kimeneti sémák
-class OptionOut(BaseModel):
-    id: int
-    name: str
-    class Config:
-        from_attributes = True
+@router.get("/all")
+def get_all_options(db: Session = Depends(get_db)):
+    try:
+        logger.info("Opciók lekérdezése...")
+        
+        allergies = db.query(Allergen).all()
+        injuries = db.query(Injury).all()
+        conditions = db.query(HealthCondition).all()
 
-@router.get("/allergens", response_model=List[OptionOut])
-def get_allergens(db: Session = Depends(get_db)):
-    items = db.query(Allergen).all()
-    return [{"id": i.allergen_id, "name": i.allergen_name} for i in items]
+        # JAVÍTÁS: Itt a modellnek megfelelő mezőneveket (allergen_id, injury_name stb.) 
+        # kell használni, és átfordítani 'id' és 'name' kulcsokra a frontend számára.
+        
+        return {
+            "allergies": [
+                {"id": a.allergen_id, "name": a.allergen_name} 
+                for a in allergies
+            ],
+            "injuries": [
+                {"id": i.injury_id, "name": i.injury_name} 
+                for i in injuries
+            ],
+            "conditions": [
+                {"id": c.condition_id, "name": c.condition_name} 
+                for c in conditions
+            ],
+        }
 
-@router.get("/injuries", response_model=List[OptionOut])
-def get_injuries(db: Session = Depends(get_db)):
-    items = db.query(Injury).all()
-    return [{"id": i.injury_id, "name": i.injury_name} for i in items]
-
-@router.get("/conditions", response_model=List[OptionOut])
-def get_conditions(db: Session = Depends(get_db)):
-    items = db.query(HealthCondition).all()
-    return [{"id": i.condition_id, "name": i.condition_name} for i in items]
+    except Exception as e:
+        logger.error(f"HIBA AZ OPTIONS LEKÉRÉSNÉL: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Szerver hiba: {str(e)}")

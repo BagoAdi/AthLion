@@ -270,3 +270,39 @@ button[type="submit"] {
     cursor: pointer;
     margin-top: 10px;
 }
+
+/* base.css vagy a <style> blokk */
+
+.dob-container {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+/* A legördülő mezők stílusa */
+.dob-container select {
+    /* 1. Gyári "csúnya" kinézet eltüntetése */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+
+    /* 2. Saját modern stílus */
+    background-color: rgba(255, 255, 255, 0.05) !important; /* Fontos a felülírás miatt */
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    padding: 12px 16px;
+    padding-right: 40px; /* Hagyunk helyet a nyílnak */
+    
+    color: #fff !important;
+    font-size: 15px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+
+/* Arányok: Az év és nap kisebb, a hónap szélesebb */
+#dob_year { flex: 1.2; }
+#dob_month { flex: 2; }
+#dob_day { flex: 1; }

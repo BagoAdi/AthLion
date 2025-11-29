@@ -306,3 +306,79 @@ button[type="submit"] {
 #dob_year { flex: 1.2; }
 #dob_month { flex: 2; }
 #dob_day { flex: 1; }
+
+/* --- AthLion PRO UNIFIED DESIGN (Végleges Egységesítés) --- */
+
+/* 1. Sötét mód kényszerítése a naptárhoz és görgetősávokhoz */
+:root {
+    color-scheme: dark; 
+}
+
+/* 2. MINDEN MEZŐ EGYSÉGESÍTÉSE (Dátum, Szöveg, Lenyíló, Szám) */
+input, 
+select, 
+textarea,
+input[type="date"],
+input[type="datetime-local"],
+input[type="number"],
+input[type="email"],
+input[type="password"] {
+    /* Kiemelt fontosságú (!important), hogy felülírja az átlátszó/glass stílust */
+    background-color: #1a202c !important; /* Tömör, sötét kékes-szürke (profi dark mode szín) */
+    color: #f7fafc !important;            /* Hófehérhez közeli szöveg */
+    border: 1px solid #4a5568 !important; /* Szolid szürke keret */
+    
+    border-radius: 10px !important;       /* Modern lekerekítés */
+    padding: 12px 16px !important;        /* Tágas belső tér */
+    font-size: 16px !important;           /* Jól olvasható méret */
+    font-family: inherit;
+    line-height: 1.5;
+    
+    /* Minden "üveges" vagy árnyék effekt leszedése */
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    background-image: none !important; /* Reset, kivéve majd a select-nél */
+    
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    appearance: none; /* Mobilos alap kinézet eltüntetése */
+}
+
+/* 3. FÓKUSZ ÁLLAPOT (Amikor írsz bele) */
+input:focus, select:focus, textarea:focus {
+    outline: none !important;
+    border-color: #3E8EDE !important; /* AthLion Kék */
+    background-color: #2d3748 !important; /* Picit világosabb, hogy jelezze az aktivitást */
+    box-shadow: 0 0 0 3px rgba(62, 142, 222, 0.25) !important; /* Kék aura */
+}
+
+/* 4. LENYÍLÓ LISTA (SELECT) EXTRA TUNING */
+select {
+    /* Egyedi nyíl ikon (Base64 SVG), hogy modern legyen */
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a0aec0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right 1rem center !important;
+    background-size: 1.2em !important;
+    padding-right: 2.5rem !important; /* Hely a nyílnak */
+    cursor: pointer;
+}
+
+/* 5. A LENYÍLÓ LISTA OPCIÓI (Amik legördülnek) */
+/* Ez biztosítja, hogy a lista is sötét legyen, ne fehér */
+option {
+    background-color: #1a202c;
+    color: #f7fafc;
+    padding: 10px;
+}
+
+/* Külön a Dátum mező ikonjának igazítása (hogy ne csússzon el) */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1); /* Fehér naptár ikon sötét háttérhez */
+    opacity: 0.6;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+}

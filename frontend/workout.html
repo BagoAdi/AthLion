@@ -19,37 +19,38 @@
     </div>
 
     <div class="nav-main-links">
-        <a href="diet.html" class="ghost" id="navDiet">Étrend</a>
-        <a href="dashboard.html" class="ghost ghost-icon" id="navHome" title="Kezdőlap">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="nav-icon">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-          </svg>
-        </a>
-        <a href="workout.html" class="ghost active" id="navWorkout">Edzésterv</a>
+      <a href="diet.html" class="ghost" id="navDiet">Étrend</a>
+      <a href="dashboard.html" class="ghost ghost-icon" id="navHome" title="Kezdőlap">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="nav-icon">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+        </svg>
+      </a>
+      <a href="workout.html" class="ghost active" id="navWorkout">Edzésterv</a>
     </div>
 
     <div class="nav-auth-group">
-        <a href="profile.html" class="ghost" id="navProfile">Profil</a>
-        <!--<button class="lang" id="langToggle">HU/EN</button>-->  
-        <span class="welcome" id="welcomeText" style="display:none"></span>
-        <a href="register.html" class="ghost" id="navRegister">Regisztráció</a>
-        <a href="login.html" class="ghost" id="navSignin">Bejelentkezés</a>
-        <button class="ghost" id="navLogout" style="display:none">Kijelentkezés</button>
+      <a href="profile.html" class="ghost" id="navProfile">Profil</a>
+      <!--<button class="lang" id="langToggle">HU/EN</button>-->
+      <span class="welcome" id="welcomeText" style="display:none"></span>
+      <a href="register.html" class="ghost" id="navRegister">Regisztráció</a>
+      <a href="login.html" class="ghost" id="navSignin">Bejelentkezés</a>
+      <button class="ghost" id="navLogout" style="display:none">Kijelentkezés</button>
     </div>
   </header>
 
   <main class="page">
     <section class="panel" id="workout">
-      
+
       <div class="view-container">
-        
-        <div id="viewCalendar" class="view-section active">
+
+        <!-- NAPTÁR NÉZET – ID igazítva: calendarView, calendarGrid, currentMonthLabel -->
+        <div id="calendarView" class="view-section active">
           <section class="card glass calendar-card full-width-calendar">
             <div class="calendar-header-row">
               <h3>Edzésnapló</h3>
               <div class="calendar-controls">
                 <button class="cal-nav" id="calendarPrev">‹</button>
-                <div class="calendar-month" id="calendarMonthLabel">–</div>
+                <div class="calendar-month" id="currentMonthLabel">–</div>
                 <button class="cal-nav" id="calendarNext">›</button>
               </div>
             </div>
@@ -59,11 +60,12 @@
               <span>Cs</span><span>P</span><span>Szo</span><span>V</span>
             </div>
 
-            <div class="calendar-grid" id="calendarList"></div>
+            <!-- ID igazítva: calendarGrid -->
+            <div class="calendar-grid" id="calendarGrid"></div>
           </section>
 
           <div class="dashboard-widgets">
-            
+
             <section class="card glass recovery-card">
               <div class="widget-header">
                 <h4>Regeneráció</h4>
@@ -84,7 +86,8 @@
                   <div class="bm-part bm-head"></div>
                   <div class="bm-part bm-torso" id="bm-torso" title="Törzs (Mell/Hát/Has)"></div>
                   <div class="bm-part bm-arm-l" id="bm-arms" title="Karok/Váll"></div>
-                  <div class="bm-part bm-arm-r"></div> <div class="bm-part bm-leg-l" id="bm-legs" title="Lábak"></div>
+                  <div class="bm-part bm-arm-r"></div>
+                  <div class="bm-part bm-leg-l" id="bm-legs" title="Lábak"></div>
                   <div class="bm-part bm-leg-r"></div>
                 </div>
               </div>
@@ -96,12 +99,15 @@
           </div>
         </div>
 
-        <div id="viewDay" class="view-section view-hidden">
+        <!-- BUILDER NÉZET – ID igazítva: workoutBuilderView, builderDate -->
+        <div id="workoutBuilderView" class="view-section view-hidden">
           <section class="card glass workout-builder">
-            
+
             <div class="builder-top-nav">
               <button class="ghost small" id="backToCalendarBtn">← Vissza a naptárhoz</button>
-              <div class="calendar-current" style="margin:0"><span id="calendarCurrentLabel">–</span></div>
+              <div class="calendar-current" style="margin:0">
+                <span id="builderDate">–</span>
+              </div>
             </div>
 
             <div class="builder-mode">
@@ -113,6 +119,7 @@
               <p class="muted small" id="dayTypeLabel" style="margin-top:8px; min-height:20px;"></p>
             </div>
 
+            <!-- GYM BUILDER -->
             <div id="gymBuilder" class="builder-body" style="display:none;">
               <div class="builder-header">
                 <h3>Gyakorlatválasztó</h3>
@@ -129,18 +136,45 @@
                   <button class="split-btn" data-type="legs">Legs</button>
                   <button class="split-btn" data-type="mixed">Vegyes</button>
                 </div>
+
+                <!-- Rejtett select, hogy a workout.js-ben lévő setupSplitSelector működjön (#dayTypeSelect) -->
+                <select id="dayTypeSelect" style="display:none;">
+                  <option value="mixed" selected>Vegyes</option>
+                  <option value="push">Push</option>
+                  <option value="pull">Pull</option>
+                  <option value="legs">Legs</option>
+                </select>
               </div>
 
               <div class="input-group" style="margin-top: 15px; margin-bottom: 20px;">
                 <label for="gymDurationInput" style="display:block; margin-bottom:5px; color:var(--text-muted); font-size:0.9rem;">
                   Edzés időtartama (perc)
                 </label>
-                <input type="number" id="gymDurationInput" class="input-field" value="60" min="10" max="300" 
-                      style="width: 100px; padding: 8px; border-radius: 6px; border: 1px solid #444; background: #222; color: #fff;">
+                <input
+                  type="number"
+                  id="gymDurationInput"
+                  class="input-field"
+                  value="60"
+                  min="10"
+                  max="300"
+                  style="width: 100px; padding: 8px; border-radius: 6px; border: 1px solid #444; background: #222; color: #fff;"
+                >
               </div>
 
               <div class="builder-section">
                 <h4>Elérhető gyakorlatok</h4>
+
+                <!-- Kereső mező: ID igazítva a JS-hez (#exerciseSearch) -->
+                <div class="input-group" style="margin-bottom:10px;">
+                  <input
+                    type="text"
+                    id="exerciseSearch"
+                    class="input-field"
+                    placeholder="Gyakorlat keresése..."
+                    style="width:100%; padding:8px; border-radius:6px; border:1px solid #444; background:#111; color:#fff;"
+                  >
+                </div>
+
                 <div class="exercise-pool" id="exercisePool"></div>
               </div>
 
@@ -149,7 +183,7 @@
                   <h4>Fő edzések (max. 3)</h4>
                   <div class="dropzone" id="mainExercises"></div>
                 </div>
-                
+
                 <div class="builder-section">
                   <h4 style="display:flex; align-items:center;">
                     Kiegészítők (max. 3)
@@ -160,9 +194,14 @@
               </div>
             </div>
 
+            <!-- CARDIO BUILDER -->
             <div id="cardioBuilder" class="builder-body" style="display:none;">
-              <div class="builder-header"><h3>Kardió aktivitás</h3></div>
-              <div class="builder-section"><div class="cardio-list" id="cardioList"></div></div>
+              <div class="builder-header">
+                <h3>Kardió aktivitás</h3>
+              </div>
+              <div class="builder-section">
+                <div class="cardio-list" id="cardioList"></div>
+              </div>
             </div>
 
             <div class="builder-footer">
@@ -175,16 +214,41 @@
 
       </div>
 
+      <!-- POPUP – ID-k igazítva: popupContent, startWorkoutBtn -->
       <div id="dayPopup" class="modal-overlay hidden" style="z-index: 200;">
         <div class="modal-content glass" style="max-width: 400px; width: 90%; padding: 24px; border: 2px solid var(--gold-2); box-shadow: 0 0 30px rgba(110, 203, 108, 0.2);">
-          <h3 id="popupDate" style="color: var(--gold-2); margin: 0 0 16px 0; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">Dátum</h3>
-          <div id="popupBody" style="margin-bottom: 24px;"></div>
-          <button class="btn" id="closePopupBtn" style="width: 100%; background: var(--gold-2); color: #05080c; font-weight: 800;">Bezárás</button>
+          <h3
+            id="popupDate"
+            style="color: var(--gold-2); margin: 0 0 16px 0; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;"
+          >
+            Dátum
+          </h3>
+
+          <!-- ID igazítva: popupContent -->
+          <div id="popupContent" style="margin-bottom: 16px;"></div>
+
+          <!-- Ezt a gombot várja a workout.js: #startWorkoutBtn -->
+          <button
+            class="btn"
+            id="startWorkoutBtn"
+            style="width: 100%; margin-bottom: 8px; background: var(--gold-2); color: #05080c; font-weight: 700;"
+          >
+            Edzés hozzáadása
+          </button>
+
+          <button
+            class="btn"
+            id="closePopupBtn"
+            style="width: 100%; background: transparent; border:1px solid var(--gold-2); color: var(--gold-2); font-weight: 600;"
+          >
+            Bezárás
+          </button>
         </div>
       </div>
 
     </section>
   </main>
+
   <script src="script.js"></script>
   <script src="workout.js"></script>
 </body>

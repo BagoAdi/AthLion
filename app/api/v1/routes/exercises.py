@@ -48,7 +48,7 @@ def _is_leg_exercise(ex: Exercise) -> bool:
 def list_exercises(
     theme: str = Query("all", description="push | pull | legs | all"),
     level: str = Query("all", description="beginner | intermediate | expert | all"),
-    limit: int = Query(100, ge=1, le=500),
+    limit: int = Query(1000, ge=1, le=1000),
     db: Session = Depends(get_db),
 ):
     """

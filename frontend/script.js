@@ -418,28 +418,7 @@ function setRandomTip() {
     }
 }
 
-async function updateNavProfile() {
-    const token = localStorage.getItem("token");
-    const nameLabel = document.getElementById('navProfileName'); // ÚJ ID!
 
-    if (!token || !nameLabel) return;
-
-    try {
-        const res = await fetch("/api/v1/auth/users/me", {
-            headers: { "Authorization": `Bearer ${token}` }
-        });
-
-        if (res.ok) {
-            const user = await res.json();
-            const dName = user.user_name || user.email;
-            
-            // Csak a nevet írjuk ki, a nyíl marad a HTML-ben
-            nameLabel.textContent = dName.length > 12 ? dName.substring(0, 10) + "..." : dName;
-        }
-    } catch (err) {
-        console.error("Hiba a név betöltésekor:", err);
-    }
-}
 
 /**
  * 5. MINDENT INDÍTÓ FŐ FÜGGVÉNY

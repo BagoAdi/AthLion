@@ -29,16 +29,26 @@
         <a href="workout.html" class="ghost" id="navWorkout">Edzésterv</a>
     </div>
 
-    <div class="nav-auth-group">
-        <a href="profile.html" class="ghost" id="navProfile">Profil</a>
-        <!--<button class="lang" id="langToggle">HU/EN</button>-->  
-        
-        <span class="welcome" id="welcomeText" style="display:none"></span>
-        
-        <a href="register.html" class="ghost" id="navRegister">Regisztráció</a>
-        <a href="login.html" class="ghost" id="navSignin">Bejelentkezés</a>
+    <div class="nav-auth-group" style="position: relative;">
+    
+    <button id="profileDropdownBtn" class="ghost" style="display:flex; align-items:center; gap:8px; padding-right:15px;">
+        <span id="navProfileName">Profilom</span> 
+        <span style="font-size: 0.8em; opacity: 0.7;">▼</span>
+    </button>
 
-        <button class="ghost" id="navLogout" style="display:none">Kijelentkezés</button>
+    <div id="profileMenu" class="dropdown-menu">
+        <div class="dropdown-header">
+          <span style="font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:1px;">Fiók</span>
+        </div>
+          <a href="profile.html" class="dropdown-item">
+            Profil szerkesztése
+          </a>
+        <div style="height:1px; background:var(--glass-stroke); margin:4px 0;"></div>
+          <a href="#" id="navLogout" class="dropdown-item" style="color: var(--err);">
+            Kijelentkezés
+          </a>
+        </div>
+
     </div>
   </header>
   <main class="page">

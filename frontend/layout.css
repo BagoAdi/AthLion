@@ -850,3 +850,53 @@ input[type=number] { -webkit-appearance: textfield; -moz-appearance: textfield; 
     color: #ff4d4d; /* Piros lesz hoverre */
     background: rgba(255, 77, 77, 0.1);
 }
+
+/* --- DROPDOWN MENÜ STÍLUSOK --- */
+/* A menü doboza */
+.dropdown-menu {
+    display: none; /* Alapból rejtve */
+    position: absolute;
+    top: 100%; /* Pontosan a gomb alá */
+    right: 0;
+    width: 200px;
+    margin-top: 10px;
+    
+    background: var(--bg); /* Vagy sötétebb: #131b24 */
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 8px;
+    z-index: 100;
+    
+    /* Animáció */
+    animation: fadeIn 0.2s ease;
+}
+
+/* Ha aktív, akkor megjelenik (JS kapcsolja ezt) */
+.dropdown-menu.show {
+    display: block;
+}
+
+/* A menüpontok */
+.dropdown-item {
+    display: block;
+    padding: 10px 16px;
+    text-decoration: none;
+    color: var(--text);
+    font-size: 0.95rem;
+    border-radius: 12px;
+    transition: background 0.2s;
+}
+
+.dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.dropdown-header {
+    padding: 8px 16px 4px 16px;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

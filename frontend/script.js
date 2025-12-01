@@ -127,58 +127,30 @@ function updateMacroDisplays() {
 // AUTHENTIKÁCIÓ ÉS GLOBÁLIS INDÍTÁS
 // =================================================
 
-/**
- * 1. Auth UI frissítése (Gombok elrejtése/megjelenítése)
- */
 function updateAuthUI() {
-    const token = localStorage.getItem('token');
-    const navRegister = $('#navRegister');
-    const navSignin = $('#navSignin');
-    const navLogout = $('#navLogout');
-    const welcome = $('#welcomeText');
-    const navProfile = $('#navProfile');
-    const heroRegister = $('#heroRegister');
-    const heroLogin = $('#heroLogin');
+    const token = localStorage.getItem("token");
+    
+    // Elemek lekérése
+    const navLogin = document.getElementById("navLogin");
+    const navRegister = document.getElementById("navRegister");
+    const navLogout = document.getElementById("navLogout");
+    const navProfile = document.getElementById("navProfile");
 
-    // A hero gombok csak az index.html-en vannak
-    const isIndexPage = !!heroRegister;
-
-    if (token) {
-        // --- BEJELENTKEZVE ---
-        const name = localStorage.getItem('user_name');
-        const email = localStorage.getItem('user_email');
-        let label = 'Szia!';
-        if (name) {
-            label = `Szia, ${name}!`;
-        } else if (email) {
-            label = `Szia, ${email.split('@')[0]}!`;
-        }
-
-        if (welcome) {
-            welcome.textContent = label;
-            welcome.style.display = 'none'; // Üdvözlő szöveg elrejtve
-        }
-        if (navRegister) navRegister.style.display = 'none';
-        if (navSignin) navSignin.style.display = 'none';
-        if (navLogout) navLogout.style.display = 'inline-flex';
-        if (navProfile) navProfile.style.display = 'inline-flex';
-        if (isIndexPage) {
-            heroRegister.style.display = 'none';
-            heroLogin.style.display = 'none';
-        }
-
-    } else {
-        // --- KIJELENTKEZVE (VENDÉG) ---
-        if (welcome) welcome.style.display = 'none';
-        if (navRegister) navRegister.style.display = 'inline-flex';
-        if (navSignin) navSignin.style.display = 'inline-flex';
-        if (navLogout) navLogout.style.display = 'none';
-        if (navProfile) navProfile.style.display = 'none';
-        if (isIndexPage) {
-            heroRegister.style.display = 'inline-flex';
-            heroLogin.style.display = 'inline-flex';
+    // 1. A Login/Register gombokat (ha vannak) a token alapján kezeljük
+    if (navLogin && navRegister) {
+        if (token) {
+            navLogin.style.display = "none";
+            navRegister.style.display = "none";
+        } else {
+            navLogin.style.display = "flex";
+            navRegister.style.display = "flex";
         }
     }
+
+    // 2. A Profil és Kijelentkezés gombokat MINDIG mutatjuk, ha léteznek
+    // (Mivel a Dashboardról már törölted a Login gombokat, ez a legbiztosabb)
+    if (navLogout) navLogout.style.display = "flex";
+    if (navProfile) navProfile.style.display = "flex";
 }
 
 /**
@@ -193,6 +165,26 @@ function initLogout() {
             localStorage.removeItem('user_email');
             updateAuthUI();
             window.location.href = 'index.html';
+        });
+    }
+}
+
+function initDropdown() {
+    const btn = document.getElementById('profileDropdownBtn');
+    const menu = document.getElementById('profileMenu');
+
+    if (btn && menu) {
+        // 1. Gomb kattintás: nyit/zár
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Ne fusson tovább a kattintás a dokumentumra
+            menu.classList.toggle('show');
+        });
+
+        // 2. Bárhova máshova kattintás: bezár
+        document.addEventListener('click', (e) => {
+            if (!menu.contains(e.target) && !btn.contains(e.target)) {
+                menu.classList.remove('show');
+            }
         });
     }
 }
@@ -243,6 +235,7 @@ function fetchMacros(token) {
 
 /**
  * 4. Felhasználói adatok betöltése (ha be van jelentkezve)
+ * JAVÍTOTT VERZIÓ: Nem dob ki hálózati hiba esetén!
  */
 function fetchUser(token) {
     fetch("/api/v1/auth/users/me", {
@@ -252,23 +245,51 @@ function fetchUser(token) {
             "Authorization": `Bearer ${token}` 
         }
     })
-    .then(res => {
+    .then(async res => {
+        // Ha minden rendben (200 OK)
         if (res.ok) return res.json();
-        throw new Error("Invalid token");
+
+        // Ha a szerver azt mondja: "Nem vagy bejelentkezve" (401) vagy "Nincs jogod" (403)
+        if (res.status === 401 || res.status === 403) {
+            throw new Error("AUTH_ERROR"); // Speciális hibaüzenet
+        }
+
+        // Minden más hiba (pl. 500 szerver hiba, vagy 404) esetén NEM dobunk ki
+        // Csak dobunk egy technikai hibát, amit elkapunk, de nem törlünk tokent
+        const errData = await res.json().catch(() => ({})); 
+        throw new Error(errData.detail || "Server error");
     })
     .then(user => {
         // Sikeres bejelentkezés, üdvözlő szöveg beállítása
         const homeTitle = $('#homeTitle');
         if (homeTitle) {
-            homeTitle.textContent = `Üdvözlünk, ${user.user_name}!`;
+            homeTitle.textContent = `Üdvözlünk, ${user.user_name || user.email}!`;
         }
         // És a makrók lekérése
         fetchMacros(token);
+        
+        // Profil név frissítése a menüben is
+        const navProfile = document.getElementById('navProfile');
+        if(navProfile) {
+             const dName = user.user_name || user.email;
+             navProfile.textContent = dName.length > 15 ? dName.substring(0, 12) + "..." : dName;
+        }
     })
     .catch(err => {
-        console.error("Auth error:", err.message);
-        localStorage.removeItem("token");
-        updateAuthUI(); // Visszaállítás vendég nézetre
+        console.error("Adatlekérési hiba:", err.message);
+
+        // KULCSFONTOSSÁGÚ RÉSZ:
+        // Csak akkor töröljük a tokent és dobunk ki, ha TÉNYLEG authentikációs hiba van.
+        if (err.message === "AUTH_ERROR") {
+            console.warn("A token lejárt vagy érvénytelen -> Kijelentkeztetés.");
+            localStorage.removeItem("token");
+            updateAuthUI(); 
+            window.location.href = 'index.html'; // Csak ekkor irányítunk át
+        } else {
+            // Ha csak a szerver nem válaszol, vagy nincs net, MARADJUNK bejelentkezve.
+            console.log("Hálózati vagy szerver hiba, de a bejelentkezést megtartjuk.");
+            // Opcionális: kiírhatsz egy üzenetet, hogy "Offline mód" vagy "Hiba a szerverrel"
+        }
     });
 }
 
@@ -397,35 +418,26 @@ function setRandomTip() {
     }
 }
 
-// Profil gomb átnevezése a felhasználó nevére
 async function updateNavProfile() {
     const token = localStorage.getItem("token");
-    const navProfile = document.getElementById('navProfile');
+    const nameLabel = document.getElementById('navProfileName'); // ÚJ ID!
 
-    if (!token || !navProfile) return;
+    if (!token || !nameLabel) return;
 
     try {
-        // Lekérjük a bejelentkezett felhasználó adatait
-        const res = await fetch("/api/v1/users/me", {
+        const res = await fetch("/api/v1/auth/users/me", {
             headers: { "Authorization": `Bearer ${token}` }
         });
 
         if (res.ok) {
             const user = await res.json();
+            const dName = user.user_name || user.email;
             
-            // Ha van teljes neve, azt írjuk ki, ha nincs, akkor az email címét
-            // (A .split(' ')[0] csak a keresztnevet írná ki, ha azt jobban szeretnéd)
-            const displayName = user.user_name || user.email;
-            
-            navProfile.textContent = displayName;
-            
-            // Opcionális: Ha nagyon hosszú a név, levághatjuk, hogy ne essen szét a menü
-            if (displayName.length > 15) {
-                navProfile.textContent = displayName.substring(0, 12) + "...";
-            }
+            // Csak a nevet írjuk ki, a nyíl marad a HTML-ben
+            nameLabel.textContent = dName.length > 12 ? dName.substring(0, 10) + "..." : dName;
         }
     } catch (err) {
-        console.error("Hiba a profil név betöltésekor:", err);
+        console.error("Hiba a név betöltésekor:", err);
     }
 }
 
@@ -442,6 +454,9 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // 3. Bekötjük a Kijelentkezés gombot
     initLogout();
+
+    // Profil legördülő menü inicializálása
+    initDropdown();
 
     // 4. Ellenőrizzük, be van-e jelentkezve
     const token = localStorage.getItem("token");

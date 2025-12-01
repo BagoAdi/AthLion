@@ -103,6 +103,32 @@
 .dropzone.active { border-color: var(--gold-1); box-shadow: 0 0 0 1px rgba(62,142,222,0.6), 0 12px 30px rgba(0,0,0,0.65); transform: translateY(-1px); }
 .dropzone.locked { opacity: 0.55; cursor: not-allowed; }
 
+/* Ajánlott extra gyakorlatok – glow + pop animáció */
+.dropzone.reco-highlight {
+  border-color: var(--gold-1);
+  box-shadow: 0 0 0 1px rgba(110,203,108,0.7),
+              0 14px 32px rgba(0,0,0,0.8);
+}
+
+.exercise-pill.reco-enter {
+  animation: recoPop 0.45s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+@keyframes recoPop {
+  0%   { opacity: 0; transform: translateY(8px) scale(0.9); }
+  60%  { opacity: 1; transform: translateY(-2px) scale(1.03); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Dinamikus magyarázó szöveg az ajánlóhoz */
+.extra-logic-text {
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+
 .cardio-list { margin-top: 8px; max-height: 200px; overflow-y: auto; border-radius: 18px; padding: 8px; background: radial-gradient(circle at 0 0, rgba(110,203,108,0.16), rgba(7,10,15,0.9)); border: 1px solid rgba(110,203,108,0.4); }
 .cardio-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 12px; cursor: pointer; font-size: 13px; margin-bottom: 6px; transition: background 0.16s var(--transition), transform 0.16s var(--transition); }
 .cardio-item:hover { background: rgba(255,255,255,0.06); transform: translateY(-1px); }
@@ -325,26 +351,39 @@ input[type=number] { -webkit-appearance: textfield; -moz-appearance: textfield; 
 .view-container {
   position: relative;
   width: 100%;
-  min-height: 700px;
+  /* Ez biztosítja, hogy legyen elég hely, ha absolute pozícióba kerülnek az elemek */
+  min-height: 800px; 
+  overflow-x: hidden; /* Hogy a slide animáció ne tolja szét az oldalt */
 }
 
-/* Nézet animációk - FIX: Nem használunk 'hidden' class-t, mert az display:none */
+/* Nézet animációk */
 .view-section {
   width: 100%;
-  transition: opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1), transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-  position: absolute;
+  /* Fontos: az átmenet ideje alatt absolute marad, hogy ne ugráljon a layout */
+  position: absolute; 
   top: 0; left: 0;
+  opacity: 0;
+  transform: translateX(20px); /* Kicsit eltoljuk alapból */
+  pointer-events: none;
+  transition: opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1), transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  z-index: 1;
 }
+
 .view-section.active {
-  opacity: 1; transform: translateX(0) scale(1);
-  pointer-events: all; position: relative;
+  opacity: 1; 
+  transform: translateX(0);
+  pointer-events: all; 
+  position: relative; /* Itt visszakerül a flow-ba */
+  z-index: 10;
 }
 
-/* ÚJ CLASS A REJTETT NÉZETEKNEK (NEM '.hidden') */
 .view-section.view-hidden {
-  opacity: 0; pointer-events: none; position: absolute; visibility: hidden;
+  opacity: 0; 
+  pointer-events: none; 
+  position: absolute; 
+  /* visibility: hidden; <- Ezt vedd ki, mert bezavarhat a transition opacity-nek */
+  transform: translateX(-20px); /* Ellenkező irányba csúszik ki */
 }
-
 #viewCalendar.view-hidden { transform: translateX(-40px) scale(0.95); }
 #viewDay.view-hidden { transform: translateX(40px) scale(0.95); }
 

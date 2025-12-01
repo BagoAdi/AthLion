@@ -1,8 +1,12 @@
 # app/api/v1/schemas/setup_schemas.py
 from pydantic import BaseModel
 from typing import List, Optional
+from datetime import date
 
 class SetupIn(BaseModel):
+    date_of_birth: date
+    height_cm: float
+    sex: str
     start_weight_kg: float
     target_weight_kg: float
     goal_type: str        # pl. "weight_loss"

@@ -44,6 +44,8 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 # EZ A LÉNYEG: Egy új "függőség" (dependency)
 # Bármelyik végpontba "bekérhetjük", és az automatikusan ellenőrzi a tokent
 # és visszaadja a bejelentkezett felhasználó adatbázis objektumát.
+# app/api/v1/routes/auth.py
+
 def get_current_active_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=401,
@@ -54,15 +56,31 @@ def get_current_active_user(token: str = Depends(oauth2_scheme), db: Session = D
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALG])
         user_id: str = payload.get("sub")
         if user_id is None:
+            print("HIBA: A tokenben nincs 'sub' (user_id) mező.")
             raise credentials_exception
-    except JWTError:
+    except JWTError as e:
+        print(f"HIBA: JWT dekódolási hiba: {e}")
         raise credentials_exception
     
-    user = db.query(User).filter(User.user_id == int(user_id)).first()
+    # --- ITT A LÉNYEG: A LEKÉRDEZÉS HIBAKERESÉSE ---
+    try:
+        user = db.query(User).filter(User.user_id == int(user_id)).first()
+    except Exception as e:
+        import traceback
+        print("\n" + "="*50)
+        print("!!! KRITIKUS ADATBÁZIS HIBA A /users/me HÍVÁSNÁL !!!")
+        print(f"Hibaüzenet: {e}")
+        print("Részletes Traceback:")
+        print(traceback.format_exc())
+        print("="*50 + "\n")
+        raise HTTPException(status_code=500, detail="Database connection error")
+    # -----------------------------------------------
+
     if user is None:
+        print(f"HIBA: Nem található user ezzel az ID-val: {user_id}")
         raise credentials_exception
+        
     return user
-# --- ÚJ KÓD VÉGE ---
 
     
 # ======== Schemas ========
@@ -70,9 +88,7 @@ class RegisterIn(BaseModel):
     email: EmailStr
     user_name: str = Field(min_length=2, max_length=100)
     password: str = Field(min_length=6, max_length=128)
-    date_of_birth: date
-    height_cm: float
-    sex: str
+    
 
 class TokenOut(BaseModel):
     access_token: str

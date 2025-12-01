@@ -224,9 +224,14 @@ async function submitForm() {
     const conditionIds = Array.from(document.querySelectorAll('input[data-group="cond"]:checked')).map(cb => parseInt(cb.value));
 
     const payload = {
-        birth_date: fullBirthDate,
-        gender: document.getElementById('gender').value,
-        height: parseFloat(document.getElementById('height').value),
+        
+        date_of_birth: fullBirthDate, 
+        
+        // Backend: sex            <-- Frontend volt: gender
+        sex: document.getElementById('gender').value,
+        
+        // Backend: height_cm      <-- Frontend volt: height
+        height_cm: parseFloat(document.getElementById('height').value),
         
         start_weight_kg: parseFloat(document.getElementById("start_weight").value),
         target_weight_kg: parseFloat(document.getElementById("target_weight").value),

@@ -7,7 +7,21 @@
 
   // ---------- KONSTANSOK & CONFIG ----------
 
-  const API_BASE = "http://127.0.0.1:8000/api/v1";
+    // PROD backend (Render) – IDE ÍRD A SAJÁT RENDER URL-EDET:
+    const PROD_API_BASE = "https://athlion-htvp.onrender.com/api/v1";
+
+    // DEV backend (lokál fejlesztéshez)
+    const DEV_API_BASE = "http://127.0.0.1:8000/api/v1";
+
+    // Ha localhostról fut a frontend, akkor a lokál backendre lő,
+    // minden más esetben a Renderes URL-re:
+    const API_BASE =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1" ||
+      window.location.protocol === "file:"
+        ? DEV_API_BASE
+        : PROD_API_BASE;
+
 
   // Izomcsoportok normalizálása
   const MUSCLE_ALIAS = {

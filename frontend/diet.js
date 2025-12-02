@@ -247,7 +247,7 @@ async function changeWater(amount) {
     const dateKey = getLocalISODate(selectedDate); // Itt is a javított dátumot küldjük
 
     try {
-        const res = await fetch("/api/v1/water/", {
+        const res = await fetch("/api/v1/water/add", {
             method: "POST",
             headers: { 
                 "Content-Type": "application/json",

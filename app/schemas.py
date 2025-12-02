@@ -2,6 +2,7 @@
 from pydantic import BaseModel, EmailStr, Field
 from datetime import date, datetime
 from typing import Optional, List, Any, Dict
+from typing import Optional, List, Dict, Any
 
 # Config beállítás, hogy a Pydantic olvassa az SQL modelleket
 class Config:
@@ -71,6 +72,7 @@ class UserUpdate(BaseModel):
     height_cm: Optional[float] = None
     date_of_birth: Optional[date] = None # Hozzáadva a Setuphoz
     sex: Optional[str] = None           # Hozzáadva a Setuphoz
+    dashboard_config: Optional[List[Dict[str, Any]]] = None
 
 class UserOut(BaseModel):
     """
@@ -87,6 +89,8 @@ class UserOut(BaseModel):
     date_of_birth: Optional[date] = None
     height_cm: Optional[float] = None
     sex: Optional[str] = None
+
+    dashboard_config: Optional[List[Dict[str, Any]]] = None
 
     training_profiles: List[TrainingProfileOut] = [] 
     

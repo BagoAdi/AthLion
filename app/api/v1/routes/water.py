@@ -1,74 +1,82 @@
-from fastapi import APIRouter, Depends, Query, HTTPException
-from sqlalchemy import func
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from datetime import date
-from typing import List
+from sqlalchemy import func, cast, Date
+from datetime import date, datetime
+from pydantic import BaseModel
+from typing import Optional
 
-from app.db.session import SessionLocal
-from app.api.v1.deps import get_current_active_user, get_db
+from app.api.v1.routes.auth import get_db
+from app.api.v1.deps import get_current_user
 from app.models.user import User
 from app.models.user_water_log import UserWaterLog
-from app.api.v1.schemas.water_schemas import WaterLogCreate, WaterLogOut
 
 router = APIRouter(prefix="/water", tags=["water"])
 
+class WaterAdd(BaseModel):
+    amount_ml: int
+    date: Optional[str] = None  # Opcionálissá tesszük, ha a frontend küldi
+
+# --- EZT A VÉGPONTOT KERESTE A DIET.JS, DE NEM VOLT MEG ---
 @router.get("/daily_sum")
-def get_daily_water_sum(
-    date_str: str = Query(..., description="YYYY-MM-DD"),
-    temp: int = Query(0, description="Cache busting timestamp"), # <--- EZ A KULCS!
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+def get_water_daily_sum(
+    date_str: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
+    """Adott nap vízfogyasztása (YYYY-MM-DD formátum)"""
     try:
-        target_date = date.fromisoformat(date_str)
+        query_date = date.fromisoformat(date_str)
     except ValueError:
-        target_date = date.today()
-    
-    # Debug kiírás a terminálba (hogy lásd, tényleg megjön-e a kérés)
-    print(f"💧 VÍZ LEKÉRÉS: User={current_user.email}, Dátum={target_date}")
+        # Ha rossz a dátum, legyen a mai
+        query_date = date.today()
 
-    total = db.query(func.sum(UserWaterLog.amount_ml)).filter(
+    total_ml = db.query(func.sum(UserWaterLog.amount_ml)).filter(
         UserWaterLog.user_id == current_user.user_id,
-        UserWaterLog.date == target_date
-    ).scalar()
+        UserWaterLog.date == query_date
+    ).scalar() or 0
     
-    val = total or 0
-    print(f"   -> Eredmény: {val} ml")
-    
-    return {"total_ml": val}
+    # A diet.js { total_ml: ... } formátumot vár
+    return {"total_ml": int(total_ml)}
 
-@router.post("/", response_model=WaterLogOut)
-def add_water_log(
-    log_in: WaterLogCreate,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+@router.get("/today")
+def get_water_today(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    """Új vízbevitel rögzítése (pl. egy pohár víz)."""
+    """Visszaadja a mai vízfogyasztást és a célt (Dashboardnak)."""
+    today = date.today()
+    
+    total_ml = db.query(func.sum(UserWaterLog.amount_ml)).filter(
+        UserWaterLog.user_id == current_user.user_id,
+        UserWaterLog.date == today
+    ).scalar() or 0
+
+    target = 2500 
+
+    return {"current": int(total_ml), "target": target}
+
+@router.post("/add")
+def add_water(
+    payload: WaterAdd,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Hozzáad egy adag vizet."""
+    # Ha a frontend küld dátumot, azt használjuk, ha nem, akkor a mait
+    if payload.date:
+        try:
+            log_date = date.fromisoformat(payload.date)
+        except ValueError:
+            log_date = date.today()
+    else:
+        log_date = date.today()
+
     new_log = UserWaterLog(
         user_id=current_user.user_id,
-        date=log_in.date,
-        amount_ml=log_in.amount_ml
+        amount_ml=payload.amount_ml,
+        date=log_date
     )
     db.add(new_log)
     db.commit()
-    db.refresh(new_log)
-    return new_log
-
-@router.delete("/{log_id}")
-def delete_water_log(
-    log_id: int,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
-):
-    """Vízbevitel törlése."""
-    log = db.query(UserWaterLog).filter(
-        UserWaterLog.log_id == log_id,
-        UserWaterLog.user_id == current_user.user_id
-    ).first()
     
-    if not log:
-        raise HTTPException(status_code=404, detail="Nem található")
-        
-    db.delete(log)
-    db.commit()
-    return {"msg": "Törölve"}
+    return {"message": "Sikeres mentés", "added": payload.amount_ml}

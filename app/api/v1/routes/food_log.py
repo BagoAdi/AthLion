@@ -90,6 +90,13 @@ def add_food_log(
     )
     
     db.add(new_log)
+
+    # --- JUTALOM (XP) HOZZÁADÁSA ---
+    # Minden étkezés rögzítése 5 XP-t ér
+    current_user.current_xp = (current_user.current_xp or 0) + 5
+    db.add(current_user) # Jelezzük, hogy a User is változott
+    # -------------------------------
+    
     db.commit()
     db.refresh(new_log)
     

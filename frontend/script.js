@@ -445,9 +445,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     //A napi random tipp betöltése
     setRandomTip();
-
-    //Átírja a profil linket a navban a felhasználónevére
-    updateNavProfile();
     
     // 5. A diet.js és workout.js saját 'DOMContentLoaded'
     // eseménykezelői itt fognak lefutni, miután ez a közös script lefutott.

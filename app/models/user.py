@@ -1,6 +1,7 @@
 from sqlalchemy import Column, DateTime, Integer, String, Date, Float, func
 from sqlalchemy.orm import relationship
 from app.db.base import Base
+from sqlalchemy.dialects.postgresql import JSONB
 
 class User(Base):
     __tablename__ = "user"
@@ -13,6 +14,10 @@ class User(Base):
     email = Column(String(100), unique=True, index=True, nullable=False)
     password_hash = Column(String(256), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    dashboard_config = Column(JSONB, nullable=True)
+    last_login_date = Column(Date, nullable=True)
+    login_streak = Column(Integer, default=0)
+    current_xp = Column(Integer, default=0)
     
     allergies = relationship("UserAllergy", back_populates="user", cascade="all, delete-orphan")
     medications = relationship("UserMedication", back_populates="user", cascade="all, delete-orphan")

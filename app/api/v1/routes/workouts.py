@@ -92,7 +92,7 @@ def save_workout_log(
         # Ha hibát dob (pl. nincs current_xp oszlop), akkor a DB séma a baj
         if hasattr(current_user, 'current_xp'):
             current_user.current_xp = (current_user.current_xp or 0) + 50
-            db.add(current_user)
+            db.merge(current_user)
 
     db.commit()
     db.refresh(result_log)

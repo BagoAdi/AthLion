@@ -1,0 +1,12 @@
+alembic==1.15.2
+fastapi==0.123.0
+pandas==2.3.3
+passlib[bcrypt]==1.7.4
+pydantic[email]==2.12.5
+python-dotenv==1.2.1
+python-jose[cryptography]==3.5.0
+SQLAlchemy==2.0.44
+
+uvicorn[standard]
+psycopg[binary]
+psycopg2-binary

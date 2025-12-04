@@ -11,13 +11,10 @@ from passlib.hash import bcrypt_sha256
 from app.db.session import SessionLocal
 from app.models.user import User
 from app.schemas import UserCreate, UserOut
-
 from passlib.hash import pbkdf2_sha256
-
-# --- ÚJ IMPORT-ok KEZDETE ---
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
-# --- ÚJ IMPORT-ok VÉGE ---
+from email_validator import validate_email, EmailNotValidError
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -38,13 +35,11 @@ def get_db():
 # --- ÁTHELYEZETT KÓD VÉGE ---
 
 
-# --- ÚJ KÓD KEZDETE (Token-kezelő és függőség) ---
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
-# EZ A LÉNYEG: Egy új "függőség" (dependency)
 # Bármelyik végpontba "bekérhetjük", és az automatikusan ellenőrzi a tokent
 # és visszaadja a bejelentkezett felhasználó adatbázis objektumát.
-# app/api/v1/routes/auth.py
+
 
 def get_current_active_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
@@ -61,8 +56,7 @@ def get_current_active_user(token: str = Depends(oauth2_scheme), db: Session = D
     except JWTError as e:
         print(f"HIBA: JWT dekódolási hiba: {e}")
         raise credentials_exception
-    
-    # --- ITT A LÉNYEG: A LEKÉRDEZÉS HIBAKERESÉSE ---
+    # --- KITERJESZTETT HIBAELKÉZELÉS ADATBÁZIS HIBA ESETÉN ---
     try:
         user = db.query(User).filter(User.user_id == int(user_id)).first()
     except Exception as e:
@@ -74,7 +68,6 @@ def get_current_active_user(token: str = Depends(oauth2_scheme), db: Session = D
         print(traceback.format_exc())
         print("="*50 + "\n")
         raise HTTPException(status_code=500, detail="Database connection error")
-    # -----------------------------------------------
 
     if user is None:
         print(f"HIBA: Nem található user ezzel az ID-val: {user_id}")
@@ -97,7 +90,7 @@ class LoginIn(BaseModel):
     email: EmailStr
     password: str
 
-# --- ÚJ SÉMA KEZDETE (Biztonságos kimenet) ---
+# --- Biztonságos kimenet ---
 # Erre azért van szükség, hogy a jelszó-hasht SOHA ne küldjük vissza a frontendnek.
 class UserOut(BaseModel):
     user_id: int
@@ -109,34 +102,42 @@ class UserOut(BaseModel):
 
     class Config:
         from_attributes = True
-# --- ÚJ SÉMA VÉGE ---
 
 # ======== Routes ========
 @router.post("/register", response_model=TokenOut)
 def register(user_in: UserCreate, db: Session = Depends(get_db)):
-    # --- A te kódod változatlanul ---
     try:
-        # 1) Dupla email védelem
-        if db.query(User).filter(User.email == user_in.email).first():
-            raise HTTPException(status_code=400, detail="Email already registered")
+        # --- 1. Szigorú E-mail Validáció (DNS ellenőrzéssel) ---
+        try:
+            valid = validate_email(user_in.email, check_deliverability=True)
+            email_normalized = valid.email
+        except EmailNotValidError as e:
+            raise HTTPException(status_code=400, detail=f"Érvénytelen e-mail cím: {str(e)}")
 
-        # 2) Jelszó hash (stabil CryptContext-tel)
+        # --- 2. Dupla regisztráció szűrése ---
+        if db.query(User).filter(User.email == email_normalized).first():
+            raise HTTPException(status_code=400, detail="Ezzel az e-mail címmel már regisztráltak.")
+
+        # --- 3. Jelszó hash ---
         try:
             password_hash = pbkdf2_sha256.hash(user_in.password)
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Password hashing failed: {e}")
+            raise HTTPException(status_code=500, detail=f"Hiba a jelszó titkosításakor: {e}")
 
-        # 3) Insert
+        # --- 4. Mentés az adatbázisba ---
         u = User(
-            email=user_in.email,
+            email=email_normalized,
             user_name=user_in.user_name,
-            password_hash=password_hash   
+            password_hash=password_hash,
+            date_of_birth=getattr(user_in, 'date_of_birth', None),
+            height_cm=getattr(user_in, 'height_cm', None),
+            sex=getattr(user_in, 'sex', None)
         )
         db.add(u)
         db.commit()
         db.refresh(u)
 
-        # 4) Token – FIGYELEM: user_id!
+        # --- 5. Token kiadása ---
         token = jwt.encode({"sub": str(u.user_id)}, JWT_SECRET, algorithm=JWT_ALG)
         return {"access_token": token}
     
@@ -144,17 +145,15 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
         raise
     except IntegrityError:
         db.rollback()
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=400, detail="Ezzel az e-mail címmel már regisztráltak.")
     except Exception as e:
-        # Ideiglenes – hogy lásd a valódi okot (később kivehetjük)
         db.rollback()
         trace = traceback.format_exc(limit=1)
-        raise HTTPException(status_code=500, detail=f"Internal error: {e} | {trace}")
+        raise HTTPException(status_code=500, detail=f"Internal error: {e}")
     
     
 @router.post("/login", response_model=TokenOut)
 def login(payload: LoginIn, db: Session = Depends(get_db)):
-    # --- A te kódod változatlanul ---
     u = db.query(User).filter(User.email == payload.email).first()
     if not u or not pbkdf2_sha256.verify(payload.password, str(u.password_hash)):
         raise HTTPException(401, "Invalid credentials")
@@ -168,9 +167,4 @@ def read_users_me(current_user: User = Depends(get_current_active_user)):
     """
     Lekéri a bejelentkezett felhasználó adatait a token alapján.
     """
-    # A 'current_user' már a teljes User ORM modell, amit a
-    # 'get_current_active_user' függőség adott vissza.
-    # A FastAPI a response_model=UserOut miatt automatikusan
-    # kiszűri a 'password_hash'-t.
     return current_user
-# --- ÚJ VÉGPONT VÉGE ---

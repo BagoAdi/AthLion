@@ -16,7 +16,7 @@ const WIDGET_TEMPLATES = {
                     <div id="waterBar" class="water-progress-fill"></div>
                 </div>
                 
-                <h2 id="waterValue" style="margin:0 0 10px 0;">0 ml</h2>
+                <h2 id="waterValue" style="margin:0 0 0px 0;">0 ml</h2>
                 
                 <div class="water-buttons">
                     <button class="btn-water" onclick="addWater(250)">+2.5 dl</button>
@@ -51,12 +51,14 @@ const WIDGET_TEMPLATES = {
         title: 'BMI Kalkulátor',
         content: `
             <div class="widget-content">
-                <h3>⚖️ BMI / BMR</h3>
+                <h3>⚖️ BMI</h3>
                 <div style="display:flex; gap:5px; flex-wrap:wrap;">
-                    <input id="w" type="number" placeholder="Súly (kg)" style="width:80px">
-                    <input id="h" type="number" placeholder="Magasság" style="width:80px">
+                    <input id="w" type="number" placeholder="Súly (kg)" style="width:200px">
+                    <input id="h" type="number" placeholder="Magasság" style="width:200px">
                 </div>
-                <button onclick="calculateBMI()" class="cta-inline" style="margin-top:10px; width:100%">Számol</button>
+                <button type="button" onclick="calculateBMI()" class="btn" style="width: 100%; font-size: 18px; padding: 5px;">
+                    Számolás
+                </button>
                 <div id="out" style="margin-top:10px; font-weight:bold;"></div>
             </div>`
     },
@@ -161,20 +163,15 @@ const WIDGET_TEMPLATES = {
 
 // --- 2. ALAPÉRTELMEZETT ELRENDEZÉS (MINDEN WIDGETTEL) ---
 const DEFAULT_LAYOUT = [
-    // Felső sor: Víz és Kalória (Nagyobbak)
-    { x: 0, y: 0, w: 4, h: 4, id: 'water' },     
-    { x: 4, y: 0, w: 4, h: 4, id: 'calories' },  
+    { x: 0, y: 0, w: 3, h: 3, id: 'water' },     
+    { x: 3, y: 0, w: 2, h: 3, id: 'calories' },
+    { x: 5, y: 0, w: 2, h: 3, id: 'login_streak' },
+    { x: 7, y: 0, w: 2, h: 3, id: 'weight_trend' },  
+    { x: 9, y: 0, w: 3, h: 3, id: 'weekly_streak' },
     
-    // Mellette BMI
-    { x: 8, y: 0, w: 4, h: 4, id: 'bmi' },       
-
-    // Alsó sor: Kisebb widgetek
-    { x: 0, y: 4, w: 8, h: 2, id: 'tip' },        
-    { x: 8, y: 4, w: 4, h: 2, id: 'weekly_streak' },
-    { x: 0, y: 6, w: 12, h: 2, id: 'weight_trend' },
-    { x: 9, y: 4, w: 3, h: 2, id: 'login_streak' },
-
-    { x: 0, y: 4, w: 8, h: 2, id: 'xp_level' },
+    { x: 0, y: 3, w: 4, h: 4, id: 'bmi' },       
+    { x: 4, y: 3, w: 3, h: 4, id: 'xp_level' },
+    { x: 7, y: 3, w: 5, h: 4, id: 'tip' },        
 ];
 
 // --- 3. INIT ---

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ATHLION - Adatvédelmi Tájékoztató</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="base.css" />
+  <link rel="stylesheet" href="index.css" />
+  <link rel="icon" type="image/png" href="favicon.png">
+  
+  <style>
+    /* Egyedi stílusok a szöveges oldalhoz */
+    .legal-content {
+      max-width: 800px;
+      margin: 120px auto 60px; /* Helyet hagyunk a navbarnak */
+      padding: 40px;
+      text-align: left;
+    }
+    
+    .legal-content h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--primary-color, #ffd700);
+    }
+
+    .legal-content h2 {
+      font-size: 1.5rem;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      color: #fff;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 10px;
+    }
+
+    .legal-content p, .legal-content li {
+      color: #ccc;
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+
+    .legal-content ul {
+      margin-left: 20px;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="landing-nav glass">
+    <div class="brand">
+      <a href="index.html" style="text-decoration: none; display: flex; align-items: center; color: inherit;">
+        <img src="athlion_logo.png" alt="ATHLION Logo" class="logo-img">
+        <div class="brand-text">ATH<span>LION</span></div>
+      </a>
+    </div>
+    <div class="nav-actions">
+      <a href="index.html" class="btn ghost">Vissza a főoldalra</a>
+    </div>
+  </nav>
+
+  <div class="legal-content glass">
+    <h1>Adatvédelmi Tájékoztató</h1>
+    <p><em>Hatályos: 2025. május 15-től</em></p>
+
+    <h2>1. Az Adatkezelő</h2>
+    <p>Jelen szolgáltatás (ATHLION) üzemeltetői és az adatok kezelői:</p>
+    <ul>
+      <li><strong>Név:</strong> Bagonya Ádám & Szakály Kristóf</li>
+      <li><strong>E-mail:</strong> bagonyaadam@gmail.com, kristofszakaly@gmail.com</li>
+    </ul>
+
+    <h2>2. A kezelt adatok köre</h2>
+    <p>A szolgáltatás nyújtásához az alábbi adatokat tároljuk (lásd <code>User</code> adatbázis modell):</p>
+    
+    <p><strong>Általános személyes adatok:</strong></p>
+    <ul>
+      <li>Teljes név (<code>user_name</code>)</li>
+      <li>E-mail cím (<code>email</code>) - a kapcsolattartáshoz és belépéshez</li>
+      <li>Jelszó (<code>password_hash</code>) - titkosítva tárolva</li>
+    </ul>
+
+    <p><strong>Fizikai és egészségügyi adatok (Cél: személyre szabott tervezés):</strong></p>
+    <ul>
+      <li>Születési dátum (<code>date_of_birth</code>)</li>
+      <li>Testmagasság (<code>height_cm</code>)</li>
+      <li>Nem (<code>sex</code>)</li>
+      <li>Allergiák (<code>allergies</code>)</li>
+      <li>Szedett gyógyszerek (<code>medications</code>)</li>
+      <li>Sérülések és egészségügyi állapotok (<code>injuries</code>, <code>conditions</code>)</li>
+    </ul>
+
+    <p><strong>Naplózott aktivitás:</strong></p>
+    <ul>
+      <li>Étkezési napló, edzésnapló, vízfogyasztás és súlyváltozás előzményei.</li>
+    </ul>
+
+    <h2>3. Az adatkezelés célja és módja</h2>
+    <p>Az adatokat kizárólag az alkalmazás működéséhez használjuk fel:</p>
+    <ul>
+      <li>Személyre szabott étrend és edzésterv generálása.</li>
+      <li>Fejlődés nyomon követése grafikonokon.</li>
+      <li>A fiók biztonságos kezelése.</li>
+    </ul>
+    <p>Az adatokat felhő alapú adatbázisban (NeonDB, PostgreSQL) tároljuk biztonságos kapcsolaton keresztül.</p>
+
+    <h2>4. Az Ön jogai</h2>
+    <p>Ön bármikor kérheti:</p>
+    <ul>
+      <li>A rólunk tárolt adatok lekérdezését.</li>
+      <li>Adatainak módosítását vagy törlését.</li>
+      <li>Fiókjának teljes megszüntetését.</li>
+    </ul>
+    <p>Ilyen irányú kérésével kérjük, forduljon hozzánk a fenti e-mail címek valamelyikén.</p>
+
+    <h2>5. Egyéb rendelkezések</h2>
+    <p>Ez a projekt egy egyetemi fejlesztés része. Az adatokat harmadik félnek nem adjuk ki, kivéve, ha arra törvény kötelez minket.</p>
+  </div>
+
+  <footer class="landing-footer">
+    <div class="footer-content">
+      <div class="brand-text muted">ATH<span>LION</span> 2025</div>
+    </div>
+  </footer>
+
+</body>
+</html>

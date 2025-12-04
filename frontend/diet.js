@@ -626,7 +626,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.addEventListener('click', async () => {
                 const mealType = btn.dataset.meal;
                 modalAi.style.display = 'none';
-                showToast("⏳ AI dolgozik...", "info");
+                showToast("⏳ Egy pillanat...", "info");
                 try {
                     const res = await fetch(`/api/v1/diet/recommendation/suggest/${mealType}`, {
                         headers: { "Authorization": `Bearer ${token}` }

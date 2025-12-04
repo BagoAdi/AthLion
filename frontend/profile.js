@@ -15,69 +15,53 @@ if (!token) {
     window.location.href = "login.html";
 }
 
-// --- MULTISELECT LOGIKA (Ugyanaz mint setup.js-ben) ---
+// --- MULTISELECT FUNKCIÓK ---
 
-function setupMultiselect(wrapperId, containerId, items, namePrefix, selectedIds = []) {
-    const wrapper = document.getElementById(wrapperId);
-    const header = wrapper.querySelector(".multiselect-header");
-    const placeholderSpan = header.querySelector(".ms-placeholder");
-    const container = document.getElementById(containerId);
+function setupMultiselect(elementId) {
+    const wrapper = document.getElementById(elementId);
+    if (!wrapper) return; // Ha nem találja az elemet, ne omoljon össze
 
-    // Lista generálása
-    container.innerHTML = "";
-    if (!items || items.length === 0) {
-        container.innerHTML = '<div style="padding:10px;font-size:13px;color:var(--muted)">Nincs adat.</div>';
-    } else {
-        items.forEach(item => {
-            const isChecked = selectedIds.includes(item.id) ? 'checked' : '';
-            const div = document.createElement("div");
-            div.className = "checkbox-item";
-            
-            div.onclick = (e) => {
-                if (e.target.tagName !== 'INPUT') {
-                    const cb = div.querySelector('input');
-                    cb.checked = !cb.checked;
-                    cb.dispatchEvent(new Event('change'));
-                }
-            };
+    const header = wrapper.querySelector('.multiselect-header');
+    const list = wrapper.querySelector('.multiselect-list');
+    
+    // FONTOS: Itt a querySelectorAll-t használjuk, ami támogatja a forEach-et
+    const items = wrapper.querySelectorAll('.checkbox-item'); 
 
-            div.innerHTML = `
-                <input type="checkbox" id="${namePrefix}_${item.id}" value="${item.id}" data-group="${namePrefix}" ${isChecked}>
-                <label for="${namePrefix}_${item.id}">${item.name}</label>
-            `;
-            container.appendChild(div);
+    // Fejléc kattintás (lenyitás/bezárás)
+    header.addEventListener('click', (e) => {
+        e.stopPropagation(); // Megakadályozza, hogy azonnal bezáródjon
+        wrapper.classList.toggle('active');
+        
+        // Másik megnyitott bezárása (opcionális UX javítás)
+        document.querySelectorAll('.multiselect').forEach(ms => {
+            if (ms !== wrapper) ms.classList.remove('active');
         });
-    }
-
-    header.addEventListener("click", () => {
-        wrapper.classList.toggle("active");
     });
 
-    const checkboxes = container.querySelectorAll(`input[type="checkbox"]`);
-    
-    const updateHeader = () => {
-        const checked = Array.from(checkboxes).filter(c => c.checked);
-        if (checked.length === 0) {
-            placeholderSpan.textContent = "Válassz...";
-            placeholderSpan.classList.remove("has-value");
-        } else {
-            const names = checked.map(c => c.nextElementSibling.textContent);
-            placeholderSpan.textContent = names.join(", ");
-            placeholderSpan.classList.add("has-value");
-        }
-    };
-
-    // Kezdéskor is le kell futtatni, hogy a bepipáltak látsszanak a fejlécben
-    updateHeader();
-
-    checkboxes.forEach(cb => cb.addEventListener("change", updateHeader));
-
-    document.addEventListener("click", (e) => {
-        if (!wrapper.contains(e.target)) {
-            wrapper.classList.remove("active");
-        }
+    // Elemek kezelése - ITT VOLT A HIBA
+    // Ha a querySelectorAll-t használod fent, akkor ez működni fog.
+    // Ha nem, akkor használd az Array.from(items).forEach(...) formát.
+    items.forEach(item => {
+        const checkbox = item.querySelector('input[type="checkbox"]');
+        
+        // Ha a sorra kattintunk, váltson a checkbox is
+        item.addEventListener('click', (e) => {
+            // Ha közvetlenül a checkboxra kattintott, ne csináljunk semmit (az alapból vált)
+            if (e.target === checkbox) return;
+            
+            checkbox.checked = !checkbox.checked;
+            // Opcionális: trigger event, ha kell frissítés
+            // updateSelectedText(wrapper); 
+        });
     });
 }
+
+// Bezárás, ha kívülre kattintunk
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.multiselect')) {
+        document.querySelectorAll('.multiselect').forEach(el => el.classList.remove('active'));
+    }
+});
 
 // --- ADATOK BETÖLTÉSE ---
 
@@ -85,40 +69,49 @@ document.addEventListener("DOMContentLoaded", async () => {
     msg.textContent = "Adatok betöltése...";
     
     try {
-        // 1. Opciók lekérése
-        const [resAlg, resInj, resCond] = await Promise.all([
-            fetch("/api/v1/options/allergens"),
-            fetch("/api/v1/options/injuries"),
-            fetch("/api/v1/options/conditions")
-        ]);
-        const allAllergens = await resAlg.json();
-        const allInjuries = await resInj.json();
-        const allConditions = await resCond.json();
+        // 1. JAVÍTÁS: Egyetlen kérés a közös végpontra
+        const optionsPromise = fetch("/api/v1/options/all");
 
-        // 2. Felhasználó adatainak lekérése
-        const [userRes, profileRes] = await Promise.all([
-            fetch("/api/v1/users/me", { headers: { "Authorization": `Bearer ${token}` } }),
-            fetch("/api/v1/setup/active", { headers: { "Authorization": `Bearer ${token}` } })
+        // 2. Felhasználó adatainak lekérése (párhuzamosan mehet az előzővel)
+        const userPromise = fetch("/api/v1/users/me", { headers: { "Authorization": `Bearer ${token}` } });
+        const profilePromise = fetch("/api/v1/setup/active", { headers: { "Authorization": `Bearer ${token}` } });
+
+        // Megvárjuk mindhárom választ
+        const [optionsRes, userRes, profileRes] = await Promise.all([
+            optionsPromise, 
+            userPromise, 
+            profilePromise
         ]);
 
-        if (!userRes.ok || !profileRes.ok) throw new Error("Hiba az adatok lekérésekor");
+        if (!optionsRes.ok || !userRes.ok || !profileRes.ok) {
+            throw new Error(`Hiba az adatok lekérésekor (Status: ${optionsRes.status}, ${userRes.status}, ${profileRes.status})`);
+        }
 
+        // JSON feldolgozása
+        const optionsData = await optionsRes.json();
         const userData = await userRes.json();
         const profileData = await profileRes.json();
 
-        // 3. Mezők kitöltése
+    
+
+        // JAVÍTÁS: Az opciók szétválogatása a közös válaszból
+        const allAllergens = optionsData.allergies || [];
+        const allInjuries = optionsData.injuries || [];
+        const allConditions = optionsData.conditions || [];
+
+        // 3. Mezők kitöltése (Változatlan)
         userNameInput.value = userData.user_name;
         heightInput.value = userData.height_cm;
         startWeightInput.value = profileData.start_weight_kg;
         targetWeightInput.value = profileData.target_weight_kg;
         goalTypeInput.value = profileData.goal_type;
-        if(profileData.diet_preference) {
+        
+        if (profileData.diet_preference) {
             dietPrefInput.value = profileData.diet_preference;
         }  
         loadLevelInput.value = profileData.load_level;
 
-        // 4. Multiselectek inicializálása a kiválasztott ID-kkal
-        // A profileData most már tartalmazza az ID listákat (pl. allergy_ids: [1, 3])
+        // 4. Multiselectek inicializálása
         setupMultiselect("ms-allergy", "allergyContainer", allAllergens, "alg", profileData.allergy_ids || []);
         setupMultiselect("ms-injury", "injuryContainer", allInjuries, "inj", profileData.injury_ids || []);
         setupMultiselect("ms-condition", "conditionContainer", allConditions, "cond", profileData.condition_ids || []);
@@ -128,7 +121,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     } catch (err) {
         msg.style.color = "var(--err)";
         msg.textContent = `❌ Hiba: ${err.message}`;
-        console.error(err);
+        console.error("Részletes hiba:", err);
     }
 });
 

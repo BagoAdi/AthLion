@@ -13,7 +13,6 @@ from app.models.allergen import Allergen
 from app.models.diet_type import DietType
 from app.models.diet_profile import DietProfile
 from app.models.user_food_log import UserFoodLog
-# FONTOS: Importáljuk a UserAllergy-t a direkt lekérdezéshez
 from app.models.user_allergy import UserAllergy 
 
 from pydantic import BaseModel
@@ -21,7 +20,7 @@ from app.api.v1.schemas.food_check import FoodCheckResponse
 
 router = APIRouter(prefix="/foods", tags=["foods"])
 
-# --- Sémák maradnak ---
+# ... (A Sémák változatlanok maradnak: AllergenOut, DietTypeOut, FoodItemOut) ...
 class AllergenOut(BaseModel):
     allergen_id: int
     allergen_name: str
@@ -48,6 +47,8 @@ class FoodItemOut(BaseModel):
     class Config:
         from_attributes = True
 
+# --- ITT A MÓDOSÍTÁS ---
+
 @router.get("/search", response_model=List[FoodItemOut])
 def search_foods(
     q: str = Query(..., min_length=3, description="Keresőkifejezés"),
@@ -55,8 +56,22 @@ def search_foods(
     db: Session = Depends(get_db)
 ):
     search_term = f"%{q.lower()}%"
+    
+    # 1. Alap lekérdezés indítása
+    stmt = select(FoodItem)
+
+    # --- DEMO KAPCSOLÓ (IF RÉSZ) ---
+    # Ezt a változót állítsd át False-ra, ha látni akarod a régi adatokat is!
+    SHOW_ONLY_DEMO = True 
+
+    if SHOW_ONLY_DEMO:
+        # Ha be van kapcsolva, hozzáadjuk a szűrést:
+        stmt = stmt.where(FoodItem.is_demo == True)
+    # -------------------------------
+
+    # 2. Folytatjuk a lekérdezés építését (láncolás)
     stmt = (
-        select(FoodItem)
+        stmt
         .where(FoodItem.food_name.ilike(search_term))
         .options(
             selectinload(FoodItem.allergens),
@@ -64,6 +79,7 @@ def search_foods(
         )
         .limit(limit)
     )
+    
     results = db.execute(stmt).scalars().unique().all()
     
     response_data = []
@@ -74,8 +90,7 @@ def search_foods(
 
     return response_data
 
-# --- ITT A JAVÍTOTT RÉSZ (CHECK) ---
-
+# ... (A check_food_safety függvény változatlan marad) ...
 @router.get("/{food_id}/check", response_model=FoodCheckResponse)
 def check_food_safety(
     food_id: int,
@@ -91,14 +106,9 @@ def check_food_safety(
         raise HTTPException(status_code=404, detail="Food not found")
 
     # 2. ALLERGIA VIZSGÁLAT - A GOLYÓÁLLÓ MÓDSZER
-    # Nem használjuk a `current_user.allergies`-t, mert az dobja az 500-at.
-    # Helyette direkt lekérdezés:
     user_allergy_records = db.query(UserAllergy).filter(UserAllergy.user_id == current_user.user_id).all()
-    
-    # Kinyerjük az ID-kat egy listába
     my_allergen_ids = [record.allergen_id for record in user_allergy_records]
     
-    # Összehasonlítás
     for food_allergen in food.allergens:
         if food_allergen.allergen_id in my_allergen_ids:
             is_safe = False

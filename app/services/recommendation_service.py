@@ -96,6 +96,15 @@ class RecommendationService:
         target_meal_kcal = daily_kcal * ratios.get(meal_type, 0.1)
         
         query = self.db.query(FoodItem)
+
+        # =========================================================
+        #  DEMO KAPCSOLÓ - CSAK A TISZTA ADATOK HASZNÁLATA
+        # =========================================================
+        SHOW_ONLY_DEMO = True
+        
+        if SHOW_ONLY_DEMO:
+             query = query.filter(FoodItem.is_demo == True)
+        # =========================================================
         
         allergy_ids = [ua.allergen_id for ua in user.allergies]
         if allergy_ids:

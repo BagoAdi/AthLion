@@ -1,5 +1,5 @@
 # app/models/food_item.py
-from sqlalchemy import Column, Integer, String, Float, Table, ForeignKey
+from sqlalchemy import Boolean, Column, Integer, String, Float, Table, ForeignKey
 from sqlalchemy.orm import relationship
 from app.db.base import Base
 
@@ -37,6 +37,9 @@ class FoodItem(Base):
     protein_100g = Column(Float, nullable=True)
     carbs_100g = Column(Float, nullable=True)
     fat_100g = Column(Float, nullable=True)
+
+    #demo kapcsoló
+    is_demo = Column(Boolean, default=False, server_default="false", index=True)
 
     # Kapcsolatok
     diet_links = relationship(

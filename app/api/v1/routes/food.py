@@ -62,7 +62,7 @@ def search_foods(
 
     # --- DEMO KAPCSOLÓ (IF RÉSZ) ---
     # Ezt a változót állítsd át False-ra, ha látni akarod a régi adatokat is!
-    SHOW_ONLY_DEMO = True 
+    SHOW_ONLY_DEMO = False
 
     if SHOW_ONLY_DEMO:
         # Ha be van kapcsolva, hozzáadjuk a szűrést:

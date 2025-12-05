@@ -100,7 +100,7 @@ class RecommendationService:
         # =========================================================
         #  DEMO KAPCSOLÓ - CSAK A TISZTA ADATOK HASZNÁLATA
         # =========================================================
-        SHOW_ONLY_DEMO = True
+        SHOW_ONLY_DEMO = False
         
         if SHOW_ONLY_DEMO:
              query = query.filter(FoodItem.is_demo == True)
